@@ -316,8 +316,8 @@ public partial class FragmentAnalysisUI
             CustomMinimumSize = new Vector2(190, 0),
             VerticalAlignment = VerticalAlignment.Center
         };
-        header.AddChild(fragmentLifecycleLabel);
-        header.MoveChild(fragmentLifecycleLabel, quitIndex);
+        //header.AddChild(fragmentLifecycleLabel);
+        //header.MoveChild(fragmentLifecycleLabel, quitIndex);
 
         // roverCompactStatusLabel replaced by inline mode buttons in the header.
         roverCompactStatusLabel = null;
