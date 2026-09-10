@@ -1,12 +1,10 @@
-[gd_scene load_steps=18 format=3 uid="uid://cb8e7vaji1v7h"]
+[gd_scene load_steps=16 format=3 uid="uid://cb8e7vaji1v7h"]
 
 [ext_resource type="Script" path="res://scenes/fragment/FragmentAnalysisUI.cs" id="1_0ks4x"]
 [ext_resource type="Script" path="res://scenes/fragment/FragmentCanvas.cs" id="2_wqr11"]
 [ext_resource type="Script" path="res://scenes/fragment/FragmentGenerationSettings.cs" id="4_ip4le"]
 [ext_resource type="Script" path="res://scenes/fragment/FragmentRockSettings.cs" id="5_mcumt"]
 [ext_resource type="Theme" uid="uid://lrxwuh3o4l5k" path="res://resources/sci-fi-theme.tres" id="6_37kou"]
-[ext_resource type="Texture2D" uid="uid://d1vo7wkt5gtc7" path="res://assets/ui/locked_opened.png" id="7_lock_open"]
-[ext_resource type="Texture2D" uid="uid://je0dbm3ehein" path="res://assets/ui/locked_closed.png" id="8_lock_closed"]
 [ext_resource type="Texture2D" uid="uid://1rxpfxjxh0wh" path="res://assets/ui/polarization_icon.png" id="9_polarization"]
 [ext_resource type="Texture2D" uid="uid://bu7ihlet7va3w" path="res://assets/ui/spectral_signature_icon.png" id="10_spectral"]
 [ext_resource type="Texture2D" uid="uid://d1gjke8pc1smg" path="res://assets/ui/surface_topography_icon.png" id="11_surface"]
@@ -274,321 +272,266 @@ text = "SKIP"
 [node name="ProcessingToggles" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 18
 
-[node name="PolarizationToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="AdjustableProcessing" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.6
+theme_override_constants/separation = 6
+
+[node name="SectionTitle" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.890196, 0.717647, 1)
+text = "ADJUSTABLE PROCESSING"
+horizontal_alignment = 1
+
+[node name="ProcessingSliders" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="PolarizationControl" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Identity" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/PolarizationToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="PolarizationButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/PolarizationToggle/Buttons"]
+[node name="PolarizationButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl/Identity"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(92, 68)
 layout_mode = 2
-tooltip_text = "Reconstruct missing sections without identifying their source."
-theme_override_constants/icon_max_width = 150
+tooltip_text = "Turn polarization processing on or off."
+theme_override_constants/icon_max_width = 96
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("9_polarization")
 expand_icon = true
 
-[node name="PolarizationLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/PolarizationToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change Polarization enabled state and level."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/PolarizationToggle"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl/Identity"]
 layout_mode = 2
 text = "POLARIZATION"
 horizontal_alignment = 1
 
-[node name="SpectralToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="Adjustment" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl"]
+custom_minimum_size = Vector2(118, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="PolarizationSlider" type="VSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl/Adjustment"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 82)
+layout_mode = 2
+size_flags_horizontal = 4
+tooltip_text = "Adjust the polarization angle from 1 to 5."
+min_value = 1.0
+max_value = 5.0
+value = 3.0
+tick_count = 5
+ticks_on_borders = true
+
+[node name="PolarizationValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/PolarizationControl/Adjustment"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "POLARIZATION ANGLE: 3"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SpectralControl" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Identity" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SpectralToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="SpectralButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SpectralToggle/Buttons"]
+[node name="SpectralButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl/Identity"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(92, 68)
 layout_mode = 2
-tooltip_text = "Enhance important signal geometry."
-theme_override_constants/icon_max_width = 150
+tooltip_text = "Turn spectral-signature processing on or off."
+theme_override_constants/icon_max_width = 96
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("10_spectral")
 expand_icon = true
 
-[node name="SpectralLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SpectralToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change Spectral enabled state and level."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SpectralToggle"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl/Identity"]
 layout_mode = 2
 text = "SPECTRAL SIGNATURE"
 horizontal_alignment = 1
+autowrap_mode = 2
 
-[node name="SurfaceToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="Adjustment" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl"]
+custom_minimum_size = Vector2(118, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="SpectralSlider" type="VSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl/Adjustment"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 82)
+layout_mode = 2
+size_flags_horizontal = 4
+tooltip_text = "Adjust spectral-signature intensity from 1 to 5."
+min_value = 1.0
+max_value = 5.0
+value = 3.0
+tick_count = 5
+ticks_on_borders = true
+
+[node name="SpectralValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SpectralControl/Adjustment"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "SPECTRAL SIGNATURE INTENSITY: 3"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SurfaceControl" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Identity" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SurfaceToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="SurfaceButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SurfaceToggle/Buttons"]
+[node name="SurfaceButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl/Identity"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(92, 68)
 layout_mode = 2
-tooltip_text = "Increase signal contrast and suppress mineral noise."
-theme_override_constants/icon_max_width = 150
+tooltip_text = "Turn surface-topography processing on or off."
+theme_override_constants/icon_max_width = 96
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("11_surface")
 expand_icon = true
 
-[node name="SurfaceLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SurfaceToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change Surface Topography enabled state and level."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/SurfaceToggle"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl/Identity"]
 layout_mode = 2
 text = "SURFACE TOPOGRAPHY"
 horizontal_alignment = 1
+autowrap_mode = 2
 
-[node name="ElectromagneticToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="Adjustment" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl"]
+custom_minimum_size = Vector2(118, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="SurfaceSlider" type="VSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl/Adjustment"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 82)
+layout_mode = 2
+size_flags_horizontal = 4
+tooltip_text = "Adjust surface-topography depth from 1 to 5."
+min_value = 1.0
+max_value = 5.0
+value = 3.0
+tick_count = 5
+ticks_on_borders = true
+
+[node name="SurfaceValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/AdjustableProcessing/ProcessingSliders/SurfaceControl/Adjustment"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "SURFACE TOPOGRAPHY DEPTH: 3"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="GroupSeparator" type="VSeparator" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+layout_mode = 2
+
+[node name="BinaryFilters" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="SectionTitle" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.694118, 0.890196, 1)
+text = "ON / OFF FILTERS"
+horizontal_alignment = 1
+
+[node name="Filters" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ElectromagneticToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ElectromagneticToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="ElectromagneticButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ElectromagneticToggle/Buttons"]
+[node name="ElectromagneticButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/ElectromagneticToggle"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 tooltip_text = "Reveal the electromagnetic scan channel."
-theme_override_constants/icon_max_width = 150
+theme_override_constants/icon_max_width = 112
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("12_electromagnetic")
 expand_icon = true
 
-[node name="ElectromagneticLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ElectromagneticToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/ElectromagneticToggle"]
 layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change the Electromagnetic channel."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ElectromagneticToggle"]
-layout_mode = 2
-text = "ELECTROMAGNETIC RESPONSE"
+text = "ELECTROMAGNETIC"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ResonanceToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="ResonanceToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ResonanceToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="ResonanceButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ResonanceToggle/Buttons"]
+[node name="ResonanceButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/ResonanceToggle"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 tooltip_text = "Reveal the resonance scan channel."
-theme_override_constants/icon_max_width = 150
+theme_override_constants/icon_max_width = 112
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("13_resonance")
 expand_icon = true
 
-[node name="ResonanceLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ResonanceToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change the Resonance channel."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/ResonanceToggle"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/ResonanceToggle"]
 layout_mode = 2
 text = "RESONANCE MAP"
 horizontal_alignment = 1
 
-[node name="XRayToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles"]
+[node name="XRayToggle" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="Buttons" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/XRayToggle"]
-layout_mode = 2
-alignment = 1
-
-[node name="XRayButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/XRayToggle/Buttons"]
+[node name="XRayButton" type="CheckButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/XRayToggle"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 84)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 tooltip_text = "Reveal the X-Ray scan channel."
-theme_override_constants/icon_max_width = 150
+theme_override_constants/icon_max_width = 112
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_processing_on")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_processing_on")
 icon = ExtResource("14_xray")
 expand_icon = true
 
-[node name="XRayLockButton" type="TextureButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/XRayToggle/Buttons"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-tooltip_text = "Unlocked: Rover search may change the X-Ray channel."
-toggle_mode = true
-texture_normal = ExtResource("7_lock_open")
-texture_pressed = ExtResource("8_lock_closed")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/XRayToggle"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingToggles/BinaryFilters/Filters/XRayToggle"]
 layout_mode = 2
 text = "X-RAY"
 horizontal_alignment = 1
-
-[node name="ProcessingSliders" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="PolarizationControl" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders"]
-custom_minimum_size = Vector2(180, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="PolarizationValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/PolarizationControl"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "POLARIZATION LEVEL: 3"
-horizontal_alignment = 1
-
-[node name="PolarizationSlider" type="HSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/PolarizationControl"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-min_value = 1.0
-max_value = 5.0
-value = 3.0
-tick_count = 5
-ticks_on_borders = true
-
-[node name="SpectralControl" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders"]
-custom_minimum_size = Vector2(180, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="SpectralValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SpectralControl"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "SPECTRAL LEVEL: 3"
-horizontal_alignment = 1
-
-[node name="SpectralSlider" type="HSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SpectralControl"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-min_value = 1.0
-max_value = 5.0
-value = 3.0
-tick_count = 5
-ticks_on_borders = true
-
-[node name="SurfaceControl" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders"]
-custom_minimum_size = Vector2(180, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="SurfaceValueLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SurfaceControl"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "SURFACE LEVEL: 3"
-horizontal_alignment = 1
-
-[node name="SurfaceSlider" type="HSlider" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SurfaceControl"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-min_value = 1.0
-max_value = 5.0
-value = 3.0
-tick_count = 5
-ticks_on_borders = true
-
-[node name="SignalNoiseControl" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="TargetMetricsLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SignalNoiseControl"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Observable ratio from 0.00 to 1.00. 1.00 means every retained detected feature is fully visible and all visible regional geometry is accounted for; it does not verify the true glyph."
-theme_override_font_sizes/font_size = 12
-text = "SELECTED REGION SIGNAL / NOISE: Select a region"
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="ProcessingEffectLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/VBoxContainer/ProcessingSliders/SignalNoiseControl"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Compares the latest measured signal/noise ratio with the preceding tested configuration. It is not a claim about the hidden solution."
-theme_override_font_sizes/font_size = 12
-text = "MEASURED CHANGE: BASELINE"
-horizontal_alignment = 1
-autowrap_mode = 2
 
 [node name="InitialModeOverlay" type="PanelContainer" parent="."]
 unique_name_in_owner = true

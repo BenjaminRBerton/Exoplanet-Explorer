@@ -254,7 +254,7 @@ public partial class TutorialDirector : Node
 			currentStep.Text,
 			targetRect,
 			mode,
-			showContinue: currentStep.Completion.Kind == TutorialCompletionKind.Continue,
+			showContinue: currentStep.Completion.AllowsContinue,
 			showQuitTutorial: currentStep.Skippable,
 			dimBackground: currentStep.DimBackground,
 			calloutPlacement: currentStep.CalloutPlacement);
@@ -304,7 +304,7 @@ public partial class TutorialDirector : Node
 		{
 			return;
 		}
-		if (currentStep.Completion.Kind == TutorialCompletionKind.Continue || targetFallbackActive)
+		if (currentStep.Completion.AllowsContinue || targetFallbackActive)
 		{
 			CompleteCurrentStep();
 		}
@@ -313,7 +313,7 @@ public partial class TutorialDirector : Node
 	private void OnCloseWindowRequested()
 	{
 		if (currentStep == null) return;
-		if (currentStep.Completion.Kind == TutorialCompletionKind.Continue)
+		if (currentStep.Completion.AllowsContinue)
 		{
 			CompleteCurrentStep();
 			return;

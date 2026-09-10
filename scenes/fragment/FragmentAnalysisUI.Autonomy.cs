@@ -93,12 +93,6 @@ public partial class FragmentAnalysisUI
 	private Button processingSearchSkipButton;
 	private Button processingSearchBackButton;
 	private Button processingSearchForwardButton;
-	private TextureButton polarizationLockButton;
-	private TextureButton spectralLockButton;
-	private TextureButton surfaceLockButton;
-	private TextureButton electromagneticLockButton;
-	private TextureButton resonanceLockButton;
-	private TextureButton xRayLockButton;
 	private Button processingHistorySectionButton;
 	private Button candidateRegionSectionButton;
 	private Button regionSequenceSectionButton;
@@ -224,9 +218,6 @@ public partial class FragmentAnalysisUI
 		initialAutonomousButton = GetNode<Button>("%InitialAutonomousButton");
 		if (!FragmentDirectionMapper.ValidateCoordinateContract(out string directionError))
 			GD.PushError($"Fragment direction coordinate contract failed: {directionError}");
-		targetMetricsLabel = GetNode<Label>("%TargetMetricsLabel");
-		processingEffectLabel = GetNode<Label>("%ProcessingEffectLabel");
-
         fragmentAnalysisRover = new FragmentAnalysisRover { Name = "FragmentAnalysisRover" };
         fragmentAnalysisRover.Configure(autonomySettings);
         AddChild(fragmentAnalysisRover);
@@ -428,6 +419,8 @@ public partial class FragmentAnalysisUI
 		roverActivityLabel = roverPanel.GetNode<Label>("%RoverActivityLabel");
 		roverCurrentActionLabel = roverPanel.GetNode<Label>("%RoverCurrentActionLabel");
 		roverNextActionLabel = roverPanel.GetNode<Label>("%RoverNextActionLabel");
+		targetMetricsLabel = roverPanel.GetNode<Label>("%TargetMetricsLabel");
+		processingEffectLabel = roverPanel.GetNode<Label>("%ProcessingEffectLabel");
 		roverTargetLabel = null; // removed from panel
 		roverPanelScroll = roverPanel.GetNode<ScrollContainer>("Margin/PanelScroll");
 		historyBackButton = roverPanel.GetNode<Button>("%HistoryBackButton");
@@ -449,13 +442,6 @@ public partial class FragmentAnalysisUI
 		processingSearchSkipButton = GetNode<Button>("%ProcessingSearchSkipButton");
 		processingSearchBackButton = GetNode<Button>("%ProcessingSearchBackButton");
 		processingSearchForwardButton = GetNode<Button>("%ProcessingSearchForwardButton");
-		polarizationLockButton = GetNode<TextureButton>("%PolarizationLockButton");
-		spectralLockButton = GetNode<TextureButton>("%SpectralLockButton");
-		surfaceLockButton = GetNode<TextureButton>("%SurfaceLockButton");
-		electromagneticLockButton = GetNode<TextureButton>("%ElectromagneticLockButton");
-		resonanceLockButton = GetNode<TextureButton>("%ResonanceLockButton");
-		xRayLockButton = GetNode<TextureButton>("%XRayLockButton");
-
 		candidateRegionSectionButton = roverPanel.GetNode<Button>("%RegionTitle");
 
 		// REGION SEQUENCE section removed; null out references.
@@ -1020,12 +1006,6 @@ public partial class FragmentAnalysisUI
 		processingSearchSkipButton.Pressed += OnProcessingSearchSkipPressed;
 		processingSearchBackButton.Pressed += OnProcessingSearchBackPressed;
 		processingSearchForwardButton.Pressed += OnProcessingSearchForwardPressed;
-		polarizationLockButton.Toggled += OnPolarizationLockToggled;
-		spectralLockButton.Toggled += OnSpectralLockToggled;
-		surfaceLockButton.Toggled += OnSurfaceLockToggled;
-		electromagneticLockButton.Toggled += OnElectromagneticLockToggled;
-		resonanceLockButton.Toggled += OnResonanceLockToggled;
-		xRayLockButton.Toggled += OnXRayLockToggled;
 		if (processingHistorySectionButton != null) processingHistorySectionButton.Pressed += OnProcessingHistorySectionPressed;
 		candidateRegionSectionButton.Pressed += OnCandidateRegionSectionPressed;
 		if (regionSequenceSectionButton != null) regionSequenceSectionButton.Pressed += OnRegionSequenceSectionPressed;
@@ -1168,12 +1148,6 @@ public partial class FragmentAnalysisUI
 		processingSearchSkipButton.Pressed -= OnProcessingSearchSkipPressed;
 		processingSearchBackButton.Pressed -= OnProcessingSearchBackPressed;
 		processingSearchForwardButton.Pressed -= OnProcessingSearchForwardPressed;
-		polarizationLockButton.Toggled -= OnPolarizationLockToggled;
-		spectralLockButton.Toggled -= OnSpectralLockToggled;
-		surfaceLockButton.Toggled -= OnSurfaceLockToggled;
-		electromagneticLockButton.Toggled -= OnElectromagneticLockToggled;
-		resonanceLockButton.Toggled -= OnResonanceLockToggled;
-		xRayLockButton.Toggled -= OnXRayLockToggled;
 		if (processingHistorySectionButton != null) processingHistorySectionButton.Pressed -= OnProcessingHistorySectionPressed;
 		candidateRegionSectionButton.Pressed -= OnCandidateRegionSectionPressed;
 		if (regionSequenceSectionButton != null) regionSequenceSectionButton.Pressed -= OnRegionSequenceSectionPressed;
@@ -2783,11 +2757,11 @@ public void DispatchAnalysisConfiguration(
     private void UpdateProcessingLabels()
     {
         polarizationValueLabel.Text =
-            $"POLARIZATION LEVEL: {Mathf.RoundToInt(polarizationSlider.Value)}";
+            $"POLARIZATION ANGLE: {Mathf.RoundToInt(polarizationSlider.Value)}";
         spectralValueLabel.Text =
-            $"SPECTRAL LEVEL: {Mathf.RoundToInt(spectralSlider.Value)}";
+            $"SPECTRAL SIGNATURE INTENSITY: {Mathf.RoundToInt(spectralSlider.Value)}";
         surfaceValueLabel.Text =
-            $"SURFACE LEVEL: {Mathf.RoundToInt(surfaceSlider.Value)}";
+            $"SURFACE TOPOGRAPHY DEPTH: {Mathf.RoundToInt(surfaceSlider.Value)}";
     }
 
     private void ShowReloadConfirmation()
@@ -3773,30 +3747,6 @@ public void DispatchAnalysisConfiguration(
 
 	private void OnProcessingSearchForwardPressed() => fragmentAnalysisRover.SearchForward();
 
-	private void OnPolarizationLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.PolarizationEnabled, locked);
-
-	private void OnSpectralLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.SpectralEnabled, locked);
-
-	private void OnSurfaceLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.SurfaceEnabled, locked);
-
-	private void OnElectromagneticLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.ElectromagneticEnabled, locked);
-
-	private void OnResonanceLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.ResonanceEnabled, locked);
-
-	private void OnXRayLockToggled(bool locked) =>
-		SetProcessingLock(FragmentAnalysisParameter.XRayEnabled, locked);
-
-	private void SetProcessingLock(FragmentAnalysisParameter parameter, bool locked)
-	{
-		if (isSyncingAutonomyUi) return;
-		fragmentAnalysisRover.SetProcessingParameterLocked(parameter, locked);
-	}
-
 	private void RefreshProcessingSearchControls()
 	{
 		if (!IsInstanceValid(processingSearchPlanLabel) || fragmentAnalysisRover?.State == null) return;
@@ -3831,46 +3781,6 @@ public void DispatchAnalysisConfiguration(
 		processingSearchBackButton.Disabled = !fragmentAnalysisRover.CanSearchBack;
 		processingSearchForwardButton.Disabled = !fragmentAnalysisRover.CanSearchForward;
 
-		isSyncingAutonomyUi = true;
-		try
-		{
-			SetLockButtonState(polarizationLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.PolarizationEnabled),
-				"Polarization enabled state and level");
-			SetLockButtonState(spectralLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.SpectralEnabled),
-				"Spectral enabled state and level");
-			SetLockButtonState(surfaceLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.SurfaceEnabled),
-				"Surface Topography enabled state and level");
-			SetLockButtonState(electromagneticLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.ElectromagneticEnabled),
-				"Electromagnetic channel");
-			SetLockButtonState(resonanceLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.ResonanceEnabled),
-				"Resonance channel");
-			SetLockButtonState(xRayLockButton,
-				fragmentAnalysisRover.IsProcessingParameterLocked(
-					FragmentAnalysisParameter.XRayEnabled),
-				"X-Ray channel");
-		}
-		finally
-		{
-			isSyncingAutonomyUi = false;
-		}
-	}
-
-	private static void SetLockButtonState(TextureButton button, bool locked, string parameterName)
-	{
-		button.ButtonPressed = locked;
-		button.TooltipText = locked
-			? $"Locked: Rover search cannot change {parameterName}. Click to unlock."
-			: $"Unlocked: Rover search may change {parameterName}. Click to lock.";
 	}
 
     private void BuildCapabilityOverrideControls()

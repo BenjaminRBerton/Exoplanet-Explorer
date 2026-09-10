@@ -576,7 +576,6 @@ public sealed class FragmentAutonomyState
     public List<FragmentDetectedStructure> DetectedStructures { get; } = new();
 	public int? SelectedStructureId { get; set; }
     public List<FragmentProcessingHistoryEntry> PreviousConfigurations { get; } = new();
-	public List<FragmentAnalysisParameter> LockedProcessingParameters { get; } = new();
 	public List<string> RejectedProcessingConfigurations { get; } = new();
 	public bool IsProcessingSearchActive { get; set; }
 	public List<FragmentOrientationHypothesis> OrientationHypotheses { get; } = new();
@@ -661,7 +660,6 @@ public sealed class FragmentAutonomyState
             clone.CapabilityOverrides[capability] = mode;
         foreach ((FragmentAutonomyCapability capability, float reliability) in YellowReliability)
             clone.YellowReliability[capability] = reliability;
-		clone.LockedProcessingParameters.AddRange(LockedProcessingParameters);
 		clone.RejectedProcessingConfigurations.AddRange(RejectedProcessingConfigurations);
 		clone.RecentActions.AddRange(RecentActions);
         foreach (FragmentDetectedFeature feature in DetectedFeatures)

@@ -1,4 +1,6 @@
+using System;
 using Game.Component;
+using Godot;
 
 namespace Game.UI.Tutorial.Scripts;
 
@@ -12,6 +14,46 @@ public sealed class Level3Tutorial : TutorialScript
 	private static bool IsRover(TutorialEventContext eventContext) =>
 		eventContext.Subject is BuildingComponent building &&
 		building.BuildingResource?.DisplayName == "Rover";
+
+	private static Func<bool> CreateFreshActionPredicate(string action)
+	{
+		bool armed = false;
+		return () =>
+		{
+			if (!armed)
+			{
+				armed = !Input.IsActionPressed(action);
+				return false;
+			}
+			return Input.IsActionJustPressed(action);
+		};
+	}
+
+	private static Func<bool> CreateFreshMouseDragPredicate()
+	{
+		bool armed = false;
+		bool dragging = false;
+		return () =>
+		{
+			bool leftPressed = Input.IsMouseButtonPressed(MouseButton.Left);
+			if (!armed)
+			{
+				armed = !leftPressed;
+				return false;
+			}
+			if (!leftPressed)
+			{
+				dragging = false;
+				return false;
+			}
+			if (!dragging)
+			{
+				dragging = true;
+				return false;
+			}
+			return Input.GetLastMouseVelocity().Length() >= 8f;
+		};
+	}
 
 	public override void Build(TutorialBuilder tutorial)
 	{
@@ -51,17 +93,20 @@ public sealed class Level3Tutorial : TutorialScript
 		tutorial.Step("level3.paint-path")
 			.Say("PAINT OR CONNECT",
 				"Freehand-paint individual path tiles, or specify a destination and let the planner connect departure and arrival efficiently. Build a route toward the highlighted fragment.")
-			.PointTo(TutorialTargetIds.MonolithFragment).GuideAction().PlaceCallout(TutorialCalloutPlacement.TopRight).UndimBackground().UntilContinue();
+			.PointTo(TutorialTargetIds.MonolithFragment).GuideAction().PlaceCallout(TutorialCalloutPlacement.TopRight).UndimBackground()
+			.UntilState(CreateFreshActionPredicate("left_click")).OrContinue();
 
 		tutorial.Step("level3.avoid-path")
 			.Say("AVOID UNSAFE TILES",
 				"Right-click a painted tile to mark it as avoided—for example, a mud tile. The route planner will reconnect around that constraint.")
-			.GuideAction().UndimBackground().PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
+			.GuideAction().UndimBackground().PlaceCallout(TutorialCalloutPlacement.TopRight)
+			.UntilState(CreateFreshActionPredicate("right_click")).OrContinue();
 
 		tutorial.Step("level3.rake")
 			.Say("RAKE TOOL",
 				"The rake offers a spatial alternative: drag it from this panel and use it to push path tiles away from mud, reshaping the route while preserving its intent.")
-			.PointTo(TutorialTargetIds.RakePanel).GuideAction().UndimBackground().PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
+			.PointTo(TutorialTargetIds.RakePanel).GuideAction().UndimBackground().PlaceCallout(TutorialCalloutPlacement.TopRight)
+			.UntilState(CreateFreshMouseDragPredicate()).OrContinue();
 
 		tutorial.Step("level3.execute-path")
 			.Say("EXECUTE THE PATH", "Press Execute Path when the route reaches the fragment's analysis range.")

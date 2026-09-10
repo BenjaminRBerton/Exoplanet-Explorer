@@ -484,6 +484,7 @@ public partial class BaseLevel : Node
 			out FragmentAnalysisState savedState);
 		fragmentBeingAnalysed = fragmentPosition;
 		activeFragmentWasRestored = wasRestored;
+		gameUI.SetMissionTimerPaused(true);
 		fragmentAnalysisUI = fragmentAnalysisScene.Instantiate<FragmentAnalysisUI>();
 		AddChild(fragmentAnalysisUI);
 		fragmentAnalysisUI.StateSaved += OnFragmentAnalysisStateSaved;
@@ -517,6 +518,7 @@ public partial class BaseLevel : Node
 		fragmentAnalysisStates[fragmentPosition] = state;
 		fragmentBeingAnalysed = null;
 		activeFragmentWasRestored = false;
+		gameUI.SetMissionTimerPaused(false);
 		if (state?.RoverState != null)
 		{
 			SetFragmentAutonomyMode(state.RoverState.GlobalMode);
@@ -572,6 +574,11 @@ public partial class BaseLevel : Node
 
 	private void OnClockisTicking()
 	{
+		if (fragmentBeingAnalysed.HasValue)
+		{
+			return;
+		}
+
 		currentTimeElapsed++;
 		if (currentTimeElapsed >= levelDefinitionResource.LevelDuration)
 		{

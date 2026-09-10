@@ -20,9 +20,9 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 	private CheckButton electromagneticButton;
 	private CheckButton resonanceButton;
 	private CheckButton xRayButton;
-	private HSlider polarizationSlider;
-	private HSlider spectralSlider;
-	private HSlider surfaceSlider;
+	private VSlider polarizationSlider;
+	private VSlider spectralSlider;
+	private VSlider surfaceSlider;
 	private Label polarizationValueLabel;
 	private Label spectralValueLabel;
 	private Label surfaceValueLabel;
@@ -56,9 +56,9 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 		electromagneticButton = GetNode<CheckButton>("%ElectromagneticButton");
 		resonanceButton = GetNode<CheckButton>("%ResonanceButton");
 		xRayButton = GetNode<CheckButton>("%XRayButton");
-		polarizationSlider = GetNode<HSlider>("%PolarizationSlider");
-		spectralSlider = GetNode<HSlider>("%SpectralSlider");
-		surfaceSlider = GetNode<HSlider>("%SurfaceSlider");
+		polarizationSlider = GetNode<VSlider>("%PolarizationSlider");
+		spectralSlider = GetNode<VSlider>("%SpectralSlider");
+		surfaceSlider = GetNode<VSlider>("%SurfaceSlider");
 		polarizationValueLabel = GetNode<Label>("%PolarizationValueLabel");
 		spectralValueLabel = GetNode<Label>("%SpectralValueLabel");
 		surfaceValueLabel = GetNode<Label>("%SurfaceValueLabel");

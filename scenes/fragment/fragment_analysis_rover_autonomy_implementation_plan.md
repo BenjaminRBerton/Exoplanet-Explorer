@@ -4284,6 +4284,29 @@ is not installed in this workspace environment.]`
   present. If none is detected, draw one and confirm it replaces rather than supplements any prior
   proposal and produces the bearing for the chosen Region.]`
 * **Scoped-Arrow result:** `[ ] PASS  [ ] FAIL  [ ] BLOCKED REASON: __________]`
+
+### Final touch — processing controls for novice readability
+
+**Implementation status:** Implemented; awaiting focused Godot test.
+
+* Remove processing-parameter locks from the interface and Rover state. All six controls remain
+  searchable, so a lock stored by an older session cannot silently restrict autonomous search.
+  Region view locks are unrelated and remain available.
+* Divide the bottom controls into two proximity-based groups with their own headings and a visual
+  separator: `ADJUSTABLE PROCESSING` and `ON / OFF FILTERS`.
+* Pair Polarization, Spectral Signature, and Surface Topography directly with vertical sliders.
+  Their values use domain descriptions—`POLARIZATION ANGLE`, `SPECTRAL SIGNATURE INTENSITY`, and
+  `SURFACE TOPOGRAPHY DEPTH`—instead of the videogame-like word `LEVEL`.
+* Keep Electromagnetic, Resonance, and X-Ray together as binary filters without adjacent sliders,
+  making their ON/OFF behavior visually distinct.
+* Move the selected-Region signal/noise and measured-change readouts out of the bottom strip and
+  into the fixed-height Rover status summary directly below `CURRENT` and `NEXT`.
+* **Processing-controls test:** `[At the target laptop and QHD resolutions, confirm a novice can
+  identify which three controls have adjustable values, which three are ON/OFF filters, that each
+  vertical slider is visibly paired with its icon, active icons retain the green outline, and no
+  processing lock is visible or affects Rover search.]`
+* **Processing-controls result:** `[ ] PASS  [ ] FAIL  [ ] BLOCKED REASON: __________]`
+
 ---
 
 # Rover autonomy architecture

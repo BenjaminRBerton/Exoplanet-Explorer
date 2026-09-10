@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/tutorial/TutorialOverlay.cs" id="1_overlay"]
 [ext_resource type="Theme" uid="uid://lrxwuh3o4l5k" path="res://resources/sci-fi-theme.tres" id="2_theme"]
@@ -16,18 +16,42 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_callout"]
-bg_color = Color(0.035, 0.075, 0.11, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.2, 0.9, 1, 0.9)
+bg_color = Color(0.012, 0.035, 0.028, 1)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.18, 1, 0.42, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.55)
-shadow_size = 12
+expand_margin_left = 3.0
+expand_margin_top = 3.0
+expand_margin_right = 3.0
+expand_margin_bottom = 3.0
+shadow_color = Color(0.08, 1, 0.32, 0.8)
+shadow_size = 18
+anti_aliasing = true
+anti_aliasing_size = 1.5
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_callout_attention"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.28, 1, 0.48, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+anti_aliasing = true
+anti_aliasing_size = 1.5
 
 [node name="TutorialOverlay" type="CanvasLayer"]
 process_mode = 3
@@ -89,7 +113,7 @@ color = Color(0.2, 0.9, 1, 1)
 
 [node name="Callout" type="PanelContainer" parent="OverlayRoot"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(460, 190)
+custom_minimum_size = Vector2(520, 210)
 layout_mode = 0
 theme = ExtResource("2_theme")
 theme_override_styles/panel = SubResource("StyleBox_callout")
@@ -113,7 +137,7 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.2, 0.9, 1, 1)
+theme_override_colors/font_color = Color(0.18, 1, 0.42, 1)
 theme_override_font_sizes/font_size = 28
 text = "TUTORIAL"
 
@@ -161,3 +185,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(130, 44)
 layout_mode = 2
 text = "CONTINUE"
+
+[node name="CalloutAttentionBorder" type="Panel" parent="OverlayRoot"]
+unique_name_in_owner = true
+visible = false
+z_index = 1
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBox_callout_attention")

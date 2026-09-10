@@ -136,17 +136,20 @@ public sealed class TutorialCompletion
 	public TutorialEvent Event { get; }
 	public Func<TutorialEventContext, bool> EventPredicate { get; }
 	public Func<bool> StatePredicate { get; }
+	public bool AllowsContinue { get; }
 
 	private TutorialCompletion(
 		TutorialCompletionKind kind,
 		TutorialEvent tutorialEvent = TutorialEvent.None,
 		Func<TutorialEventContext, bool> eventPredicate = null,
-		Func<bool> statePredicate = null)
+		Func<bool> statePredicate = null,
+		bool allowsContinue = false)
 	{
 		Kind = kind;
 		Event = tutorialEvent;
 		EventPredicate = eventPredicate;
 		StatePredicate = statePredicate;
+		AllowsContinue = allowsContinue || kind == TutorialCompletionKind.Continue;
 	}
 
 	public static TutorialCompletion Continue()
@@ -172,6 +175,16 @@ public sealed class TutorialCompletion
 	public static TutorialCompletion State(Func<bool> predicate)
 	{
 		return new TutorialCompletion(TutorialCompletionKind.State, statePredicate: predicate);
+	}
+
+	public TutorialCompletion WithContinueAlternative()
+	{
+		return new TutorialCompletion(
+			Kind,
+			Event,
+			EventPredicate,
+			StatePredicate,
+			allowsContinue: true);
 	}
 
 	public bool Matches(TutorialEventContext context)
