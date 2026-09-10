@@ -38,6 +38,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private Line2D arrowLine;
 	private Polygon2D arrowHead;
 	private PanelContainer callout;
+	private Panel calloutAttentionBorder;
 	private Label titleLabel;
 	private Label bodyLabel;
 	private Button continueButton;
@@ -50,6 +51,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private Rect2 visibleFocusRect;
 	private bool stepVisible;
 	private double pulseTime;
+	private double stepVisibleSeconds;
 
 	public override void _Ready()
 	{
@@ -63,6 +65,7 @@ public partial class TutorialOverlay : CanvasLayer
 		arrowLine = GetNode<Line2D>("%ArrowLine");
 		arrowHead = GetNode<Polygon2D>("%ArrowHead");
 		callout = GetNode<PanelContainer>("%Callout");
+		calloutAttentionBorder = GetNode<Panel>("%CalloutAttentionBorder");
 		titleLabel = GetNode<Label>("%TitleLabel");
 		bodyLabel = GetNode<Label>("%BodyLabel");
 		continueButton = GetNode<Button>("%ContinueButton");
@@ -114,6 +117,23 @@ public partial class TutorialOverlay : CanvasLayer
 		// Use a deliberately broad range: the previous 0.72-1.0 pulse was imperceptible in play.
 		float alpha = 0.35f + (0.65f * ((Mathf.Sin((float)pulseTime * 5f) + 1f) * 0.5f));
 		focusBorder.Modulate = new Color(1f, 1f, 1f, alpha);
+
+		stepVisibleSeconds += delta;
+		bool showAttentionFlicker =
+			requestedCalloutPlacement == TutorialCalloutPlacement.TopRight &&
+			stepVisibleSeconds >= 5d;
+		calloutAttentionBorder.Visible = showAttentionFlicker;
+		if (showAttentionFlicker)
+		{
+			float time = (float)(stepVisibleSeconds - 5d);
+			// Keep attention below two cycles per second. The wider contrast makes the flicker
+			// legible, but it still affects only a transparent, shadowless border.
+			float slowPulse = (Mathf.Sin((time * 5f) +
+				(0.2f * Mathf.Sin(time * 2.3f))) + 1f) * 0.5f;
+			float unevenPulse = (Mathf.Sin((time * 10.5f) + 1.1f) + 1f) * 0.5f;
+			float borderAlpha = 0.24f + (slowPulse * 0.46f) + (unevenPulse * 0.16f);
+			calloutAttentionBorder.Modulate = new Color(1f, 1f, 1f, borderAlpha);
+		}
 	}
 
 	public void ShowStep(
@@ -145,6 +165,8 @@ public partial class TutorialOverlay : CanvasLayer
 		stepVisible = true;
 		tutorialCursor?.SetPopupCursorOverride(true);
 		pulseTime = 0d;
+		stepVisibleSeconds = 0d;
+		calloutAttentionBorder.Visible = false;
 		RefreshLayout();
 		Callable.From(RefreshLayout).CallDeferred();
 
@@ -169,6 +191,11 @@ public partial class TutorialOverlay : CanvasLayer
 		requestedFocusRect = null;
 		requestedCalloutPlacement = TutorialCalloutPlacement.Auto;
 		pulseTime = 0d;
+		stepVisibleSeconds = 0d;
+		if (calloutAttentionBorder != null)
+		{
+			calloutAttentionBorder.Visible = false;
+		}
 		if (overlayRoot != null)
 		{
 			overlayRoot.Visible = false;
@@ -298,6 +325,7 @@ public partial class TutorialOverlay : CanvasLayer
 		position.X = Mathf.Clamp(position.X, ViewportMargin, Mathf.Max(ViewportMargin, viewportSize.X - minimumSize.X - ViewportMargin));
 		position.Y = Mathf.Clamp(position.Y, ViewportMargin, Mathf.Max(ViewportMargin, viewportSize.Y - minimumSize.Y - ViewportMargin));
 		callout.Position = position;
+		ApplyRect(calloutAttentionBorder, new Rect2(position, minimumSize));
 	}
 
 	private void LayoutArrow(bool hasFocus)

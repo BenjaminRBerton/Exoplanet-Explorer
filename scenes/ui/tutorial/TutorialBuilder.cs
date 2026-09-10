@@ -179,6 +179,13 @@ public sealed class TutorialStepBuilder
 		return this;
 	}
 
+	/// <summary>Keeps CONTINUE available as an alternative to the configured action condition.</summary>
+	public TutorialStepBuilder OrContinue()
+	{
+		completion = (completion ?? TutorialCompletion.Continue()).WithContinueAlternative();
+		return this;
+	}
+
 	public TutorialStepBuilder FallbackAfter(double seconds)
 	{
 		missingTargetTimeoutSeconds = Math.Max(0d, seconds);

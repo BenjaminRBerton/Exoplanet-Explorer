@@ -51,6 +51,7 @@ tile_map_data = PackedByteArray("AAACAAYAAAAAAAIAAAADAAYAAAABAAIAAAAEAAYAAAABAAE
 tile_set = ExtResource("2_05fa2")
 
 [node name="TreeLayer" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer/ElevationLayer" index="4"]
+visible = false
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAALAAEAAQAAAAAAAAALAAIAAQAAAAAAAAAIAAIAAQAAAAAAAAADAAQAAQAAAAAAAAATAAAAAQAAAAAAAAANAAcAEQAAAAAAAAALAAMAEgAAAAAAAAANAP7/EwAAAAAAAAANAAgAAQAAAAAAAAANAAAAAQAAAAAAAAA=")
 tile_set = ExtResource("2_05fa2")

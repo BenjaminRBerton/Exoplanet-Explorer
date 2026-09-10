@@ -48,6 +48,7 @@ public partial class GameUI : CanvasLayer
 	[Signal]
 	public delegate void SendPathToRobotButtonPressedEventHandler();
 	private bool isTimeIsUp = false;
+	private bool isMissionTimerPaused;
 	public int TimeToCompleteLevel;
 
 	private VBoxContainer buildingSectionContainer;
@@ -479,9 +480,14 @@ public partial class GameUI : CanvasLayer
 		isTimeIsUp = false;
 	}
 
+	public void SetMissionTimerPaused(bool paused)
+	{
+		isMissionTimerPaused = paused;
+	}
+
 	private void OnClockIsTicking()
 	{
-		if (isTimeIsUp)
+		if (isTimeIsUp || isMissionTimerPaused)
 		{
 			return;
 		}

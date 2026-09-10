@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Game.Component;
 using Godot;
 
@@ -40,6 +42,89 @@ public sealed class Level1Tutorial : TutorialScript
 		if (!IsRover(eventContext) || !eventContext.WorldPosition.HasValue) return false;
 		Vector2I distance = eventContext.WorldPosition.Value - context.MonolithPosition;
 		return Mathf.Abs(distance.X) <= 2 && Mathf.Abs(distance.Y) <= 2;
+	}
+
+	private static Func<bool> CreateAllMovementKeysPracticedPredicate()
+	{
+		string[] actions = { "move_up", "move_left", "move_down", "move_right" };
+		HashSet<string> practiced = new();
+		bool armed = false;
+		return () =>
+		{
+			if (!armed)
+			{
+				armed = Array.TrueForAll(actions, action => !Input.IsActionPressed(action));
+				return false;
+			}
+			foreach (string action in actions)
+				if (Input.IsActionJustPressed(action)) practiced.Add(action);
+			return practiced.Count == actions.Length;
+		};
+	}
+
+	private static Func<bool> CreateCameraControlsPracticedPredicate()
+	{
+		bool armed = false;
+		bool zoomPracticed = false;
+		bool panPracticed = false;
+		bool dragging = false;
+		return () =>
+		{
+			bool leftPressed = Input.IsMouseButtonPressed(MouseButton.Left);
+			if (!armed)
+			{
+				armed = !leftPressed;
+				return false;
+			}
+
+			zoomPracticed |= Input.IsActionJustPressed("scroll_forward") ||
+				Input.IsActionJustPressed("scroll_backward");
+			panPracticed |= Input.IsActionJustPressed("pan_left") ||
+				Input.IsActionJustPressed("pan_right") ||
+				Input.IsActionJustPressed("pan_up") ||
+				Input.IsActionJustPressed("pan_down");
+
+			if (leftPressed && !dragging)
+			{
+				dragging = true;
+			}
+			else if (leftPressed && dragging && Input.GetLastMouseVelocity().Length() >= 8f)
+			{
+				panPracticed = true;
+			}
+			else if (!leftPressed)
+			{
+				dragging = false;
+			}
+
+			return zoomPracticed && panPracticed;
+		};
+	}
+
+	private static Func<bool> CreateFreshMouseDragPredicate()
+	{
+		bool armed = false;
+		bool dragging = false;
+		return () =>
+		{
+			bool leftPressed = Input.IsMouseButtonPressed(MouseButton.Left);
+			if (!armed)
+			{
+				armed = !leftPressed;
+				return false;
+			}
+			if (!leftPressed)
+			{
+				dragging = false;
+				return false;
+			}
+			if (!dragging)
+			{
+				dragging = true;
+				return false;
+			}
+			return Input.GetLastMouseVelocity().Length() >= 8f;
+		};
 	}
 
 	public override void Build(TutorialBuilder tutorial)
@@ -92,11 +177,12 @@ public sealed class Level1Tutorial : TutorialScript
 		tutorial.Step("level1.rover-ready")
 			.Say(
 				"CAMERA CONTROLS",
-				"Before selecting the rover, scroll to zoom. Pan the camera with the arrow keys, or hold left-click and drag anywhere in the worldview. Then press Continue.")
+				"Before selecting the rover, scroll to zoom. Pan the camera with the arrow keys, or hold left-click and drag anywhere in the worldview. The tutorial continues after both are tried, or you can press Continue.")
 			.GuideAction()
 			.UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.UntilContinue();
+			.UntilState(CreateCameraControlsPracticedPredicate())
+			.OrContinue();
 
 		tutorial.Step("level1.select-rover")
 			.Say(
@@ -113,11 +199,12 @@ public sealed class Level1Tutorial : TutorialScript
 		tutorial.Step("level1.manual-controls")
 			.Say("MANUAL CONTROL",
 				"Use W, A, S, and D keys to move the selected rover one tile at a time: W north, " +
-				"A west, S south, and D east.")
+				"A west, S south, and D east. The tutorial continues after all four keys are tried.")
 			.GuideAction()
 			.UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.UntilContinue();
+			.UntilState(CreateAllMovementKeysPracticedPredicate())
+			.OrContinue();
 
 		tutorial.Step("level1.manual-destination")
 			.Say("DRIVE TO THE MARKER",
@@ -214,7 +301,8 @@ public sealed class Level1Tutorial : TutorialScript
 			.PointTo(TutorialTargetIds.AnomalyRadar)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.UntilContinue();
+			.UntilState(CreateFreshMouseDragPredicate())
+			.OrContinue();
 
 		tutorial.Step("level1.anomaly-indicator")
 			.Say("GRAVITATIONAL ANOMALY TREND",

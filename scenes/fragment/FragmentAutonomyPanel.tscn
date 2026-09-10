@@ -60,7 +60,7 @@ layout_mode = 2
 
 [node name="StatusSummary" type="VBoxContainer" parent="Margin/PanelScroll/Content"]
 clip_contents = true
-custom_minimum_size = Vector2(0, 118)
+custom_minimum_size = Vector2(0, 184)
 layout_mode = 2
 theme_override_constants/separation = 3
 
@@ -86,6 +86,27 @@ layout_mode = 2
 text = "NEXT: Select Supporter or Performer"
 autowrap_mode = 2
 max_lines_visible = 2
+
+[node name="MetricsSeparator" type="HSeparator" parent="Margin/PanelScroll/Content/StatusSummary"]
+layout_mode = 2
+
+[node name="TargetMetricsLabel" type="Label" parent="Margin/PanelScroll/Content/StatusSummary"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Observable ratio from 0.00 to 1.00. 1.00 means every retained detected feature is fully visible and all visible regional geometry is accounted for; it does not verify the true glyph."
+theme_override_font_sizes/font_size = 12
+text = "SELECTED REGION SIGNAL / NOISE: Select a region"
+autowrap_mode = 2
+max_lines_visible = 1
+
+[node name="ProcessingEffectLabel" type="Label" parent="Margin/PanelScroll/Content/StatusSummary"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Compares the latest measured signal/noise ratio with the preceding tested configuration. It is not a claim about the hidden solution."
+theme_override_font_sizes/font_size = 12
+text = "MEASURED CHANGE: BASELINE"
+autowrap_mode = 2
+max_lines_visible = 1
 
 [node name="RegionSeparator" type="HSeparator" parent="Margin/PanelScroll/Content"]
 layout_mode = 2

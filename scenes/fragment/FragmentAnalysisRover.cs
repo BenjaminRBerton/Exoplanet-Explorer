@@ -3882,19 +3882,7 @@ public partial class FragmentAnalysisRover : Node
 		autonomousBestDenseRegionCount = 0;
 		autonomousBestConfiguration = null;
 		FragmentAnalysisControlState current = commandSink.CaptureControlState();
-		List<int> searchableBits = new();
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.PolarizationEnabled))
-			searchableBits.Add(0);
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.SpectralEnabled))
-			searchableBits.Add(1);
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.SurfaceEnabled))
-			searchableBits.Add(2);
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.ElectromagneticEnabled))
-			searchableBits.Add(3);
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.ResonanceEnabled))
-			searchableBits.Add(4);
-		if (!IsProcessingParameterLocked(FragmentAnalysisParameter.XRayEnabled))
-			searchableBits.Add(5);
+		List<int> searchableBits = new() { 0, 1, 2, 3, 4, 5 };
 		autonomousReachableRegionConfigurationCount = 1 << searchableBits.Count;
 
 		int startMask = GetConfigurationMask(current);
@@ -4324,29 +4312,17 @@ public partial class FragmentAnalysisRover : Node
 		int spectralLevel,
 		int surfaceLevel)
 	{
-		bool polarizationLocked = IsProcessingParameterLocked(
-			FragmentAnalysisParameter.PolarizationEnabled);
-		bool spectralLocked = IsProcessingParameterLocked(FragmentAnalysisParameter.SpectralEnabled);
-		bool surfaceLocked = IsProcessingParameterLocked(FragmentAnalysisParameter.SurfaceEnabled);
-		bool electromagneticLocked = IsProcessingParameterLocked(
-			FragmentAnalysisParameter.ElectromagneticEnabled);
-		bool resonanceLocked = IsProcessingParameterLocked(FragmentAnalysisParameter.ResonanceEnabled);
-		bool xrayLocked = IsProcessingParameterLocked(FragmentAnalysisParameter.XRayEnabled);
 		return new FragmentAnalysisControlState
 		{
-			PolarizationEnabled = polarizationLocked
-				? baseline.PolarizationEnabled : (mask & 1) != 0,
-			PolarizationLevel = polarizationLocked
-				? baseline.PolarizationLevel : polarizationLevel,
-			SpectralEnabled = spectralLocked ? baseline.SpectralEnabled : (mask & 2) != 0,
-			SpectralLevel = spectralLocked ? baseline.SpectralLevel : spectralLevel,
-			SurfaceEnabled = surfaceLocked ? baseline.SurfaceEnabled : (mask & 4) != 0,
-			SurfaceLevel = surfaceLocked ? baseline.SurfaceLevel : surfaceLevel,
-			ElectromagneticEnabled = electromagneticLocked
-				? baseline.ElectromagneticEnabled : (mask & 8) != 0,
-			ResonanceEnabled = resonanceLocked
-				? baseline.ResonanceEnabled : (mask & 16) != 0,
-			XRayEnabled = xrayLocked ? baseline.XRayEnabled : (mask & 32) != 0,
+			PolarizationEnabled = (mask & 1) != 0,
+			PolarizationLevel = polarizationLevel,
+			SpectralEnabled = (mask & 2) != 0,
+			SpectralLevel = spectralLevel,
+			SurfaceEnabled = (mask & 4) != 0,
+			SurfaceLevel = surfaceLevel,
+			ElectromagneticEnabled = (mask & 8) != 0,
+			ResonanceEnabled = (mask & 16) != 0,
+			XRayEnabled = (mask & 32) != 0,
 			RotationDegrees = baseline.RotationDegrees,
 			ViewZoom = baseline.ViewZoom,
 			ViewPan = baseline.ViewPan
@@ -4533,24 +4509,6 @@ public partial class FragmentAnalysisRover : Node
 		PlanNextProcessingAdjustment();
 	}
 
-	public bool IsProcessingParameterLocked(FragmentAnalysisParameter parameter) =>
-		State?.LockedProcessingParameters.Contains(GetLockKey(parameter)) == true;
-
-	public void SetProcessingParameterLocked(FragmentAnalysisParameter parameter, bool locked)
-	{
-		if (State == null) return;
-		FragmentAnalysisParameter key = GetLockKey(parameter);
-		bool currentlyLocked = State.LockedProcessingParameters.Contains(key);
-		if (currentlyLocked == locked) return;
-		if (locked) State.LockedProcessingParameters.Add(key);
-		else State.LockedProcessingParameters.Remove(key);
-		CancelPendingProcessingAdjustment();
-		RecordAction($"CONFIG LOCK: {GetParameterDisplayName(key)} {(locked ? "ON" : "OFF")}");
-		if (State.IsProcessingSearchActive && !State.IsPaused) PlanNextProcessingAdjustment();
-		else RefreshIdleStatus();
-		ProcessingSearchChanged?.Invoke();
-	}
-
 	public void SearchBack()
 	{
 		int index = GetProcessingHistoryIndex();
@@ -4617,7 +4575,7 @@ public partial class FragmentAnalysisRover : Node
 			commandSink.CaptureControlState(),
 			ProcessingHistory,
 			State.RejectedProcessingConfigurations,
-			State.LockedProcessingParameters,
+			Array.Empty<FragmentAnalysisParameter>(),
 			State.SelectedRegionId,
 			settings?.ProcessingEffectThreshold ?? 0.02f);
 		if (pendingProcessingAdjustment == null)
@@ -4673,12 +4631,6 @@ public partial class FragmentAnalysisRover : Node
 		try
 		{
 			FragmentProcessingAdjustment adjustment = pendingProcessingAdjustment;
-			if (IsProcessingParameterLocked(adjustment.Parameter))
-			{
-				CancelPendingProcessingAdjustment();
-				PlanNextProcessingAdjustment();
-				return;
-			}
 			string transition =
 				$"{FragmentConfigurationSearch.GetConfigurationKey(commandSink.CaptureControlState())}" +
 				$">{adjustment.ConfigurationKey}";
@@ -4750,22 +4702,7 @@ public partial class FragmentAnalysisRover : Node
 		return ProcessingHistory.Count - 1;
 	}
 
-	private static FragmentAnalysisParameter GetLockKey(FragmentAnalysisParameter parameter) => parameter switch
-	{
-		FragmentAnalysisParameter.PolarizationLevel => FragmentAnalysisParameter.PolarizationEnabled,
-		FragmentAnalysisParameter.SpectralLevel => FragmentAnalysisParameter.SpectralEnabled,
-		FragmentAnalysisParameter.SurfaceLevel => FragmentAnalysisParameter.SurfaceEnabled,
-		_ => parameter
-	};
-
-	private string GetLockedProcessingParameterNames()
-	{
-		if (State?.LockedProcessingParameters.Count is not > 0) return "None";
-		List<string> names = new();
-		foreach (FragmentAnalysisParameter parameter in State.LockedProcessingParameters)
-			names.Add(GetParameterDisplayName(parameter));
-		return string.Join(", ", names);
-	}
+	private static string GetLockedProcessingParameterNames() => "None";
 
 	private string GetProcessingTargetName() => State?.SelectedRegionId is int regionId
 		? $"Region {regionId}"
