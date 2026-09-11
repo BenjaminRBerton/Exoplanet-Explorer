@@ -37,6 +37,7 @@ public partial class TutorialDirector : Node
 	private double missingTargetElapsed;
 	private bool ownsPause;
 	private bool previousPauseState;
+	private bool presentationMode;
 
 	public bool IsRunning => running;
 	public string CurrentStepId => currentStep?.Id;
@@ -71,11 +72,14 @@ public partial class TutorialDirector : Node
 		StopInternal(hideOverlay: true);
 
 		steps = script.CreateSteps();
+		presentationMode = script.UsesPresentationLayout;
+		overlay.ConfigurePresentationMode(presentationMode);
 		completedStepIds.Clear();
 		nextStepIndex = 0;
 		running = true;
 		eventBridge.EventPublished += OnEventPublished;
 		overlay.ContinueRequested += OnContinueRequested;
+		overlay.PreviousRequested += OnPreviousRequested;
 		overlay.CloseWindowRequested += OnCloseWindowRequested;
 		overlay.QuitTutorialRequested += OnQuitTutorialRequested;
 		TryActivateNextStep();
@@ -207,7 +211,10 @@ public partial class TutorialDirector : Node
 				showContinue: false,
 				showQuitTutorial: currentStep.Skippable,
 				dimBackground: currentStep.DimBackground,
-				calloutPlacement: GetMissingTargetPlacement());
+				calloutPlacement: GetMissingTargetPlacement(),
+				imagePath: currentStep.ImagePath,
+				showPrevious: presentationMode && nextStepIndex > 1,
+				progressText: GetProgressText());
 		}
 		CheckAlreadySatisfiedCompletion();
 	}
@@ -243,7 +250,10 @@ public partial class TutorialDirector : Node
 			showContinue: true,
 			showQuitTutorial: currentStep.Skippable,
 			dimBackground: currentStep.DimBackground,
-			calloutPlacement: GetMissingTargetPlacement());
+			calloutPlacement: GetMissingTargetPlacement(),
+			imagePath: currentStep.ImagePath,
+			showPrevious: presentationMode && nextStepIndex > 1,
+			progressText: GetProgressText());
 		EmitSignal(SignalName.TargetFallbackUsed, currentStep.Id, currentStep.TargetId);
 	}
 
@@ -257,7 +267,15 @@ public partial class TutorialDirector : Node
 			showContinue: currentStep.Completion.AllowsContinue,
 			showQuitTutorial: currentStep.Skippable,
 			dimBackground: currentStep.DimBackground,
-			calloutPlacement: currentStep.CalloutPlacement);
+			calloutPlacement: currentStep.CalloutPlacement,
+			imagePath: currentStep.ImagePath,
+			showPrevious: presentationMode && nextStepIndex > 1,
+			progressText: GetProgressText());
+	}
+
+	private string GetProgressText()
+	{
+		return presentationMode ? $"{nextStepIndex} / {steps.Count}" : null;
 	}
 
 	private void CheckAlreadySatisfiedCompletion()
@@ -308,6 +326,31 @@ public partial class TutorialDirector : Node
 		{
 			CompleteCurrentStep();
 		}
+	}
+
+	private void OnPreviousRequested()
+	{
+		if (!presentationMode || currentStep == null)
+		{
+			return;
+		}
+
+		int previousIndex = nextStepIndex - 2;
+		if (previousIndex < 0)
+		{
+			return;
+		}
+
+		DetachTargetButton();
+		overlay.HideStep();
+		RestorePausePolicy();
+		completedStepIds.Remove(steps[previousIndex].Id);
+		currentStep = null;
+		waitingForTarget = false;
+		targetFallbackActive = false;
+		currentOverlayDismissed = false;
+		nextStepIndex = previousIndex;
+		TryActivateNextStep();
 	}
 
 	private void OnCloseWindowRequested()
@@ -424,12 +467,14 @@ public partial class TutorialDirector : Node
 		if (overlay != null)
 		{
 			overlay.ContinueRequested -= OnContinueRequested;
+			overlay.PreviousRequested -= OnPreviousRequested;
 			overlay.CloseWindowRequested -= OnCloseWindowRequested;
 			overlay.QuitTutorialRequested -= OnQuitTutorialRequested;
 			if (hideOverlay)
 			{
 				overlay.HideStep();
 			}
+			overlay.ConfigurePresentationMode(false);
 		}
 		if (eventBridge != null)
 		{
@@ -437,6 +482,7 @@ public partial class TutorialDirector : Node
 		}
 
 		running = false;
+		presentationMode = false;
 		waitingForTrigger = false;
 		waitingForTarget = false;
 		targetFallbackActive = false;

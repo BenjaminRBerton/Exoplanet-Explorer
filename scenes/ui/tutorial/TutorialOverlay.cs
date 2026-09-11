@@ -20,6 +20,9 @@ public partial class TutorialOverlay : CanvasLayer
 	public delegate void ContinueRequestedEventHandler();
 
 	[Signal]
+	public delegate void PreviousRequestedEventHandler();
+
+	[Signal]
 	public delegate void CloseWindowRequestedEventHandler();
 
 	[Signal]
@@ -41,9 +44,12 @@ public partial class TutorialOverlay : CanvasLayer
 	private Panel calloutAttentionBorder;
 	private Label titleLabel;
 	private Label bodyLabel;
+	private TextureRect slideImage;
 	private Button continueButton;
+	private Button previousButton;
 	private Button closeWindowButton;
 	private Button quitTutorialButton;
+	private Label slideProgressLabel;
 	private Cursor tutorialCursor;
 
 	private Rect2? requestedFocusRect;
@@ -52,6 +58,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private bool stepVisible;
 	private double pulseTime;
 	private double stepVisibleSeconds;
+	private bool presentationMode;
 
 	public override void _Ready()
 	{
@@ -68,17 +75,22 @@ public partial class TutorialOverlay : CanvasLayer
 		calloutAttentionBorder = GetNode<Panel>("%CalloutAttentionBorder");
 		titleLabel = GetNode<Label>("%TitleLabel");
 		bodyLabel = GetNode<Label>("%BodyLabel");
+		slideImage = GetNode<TextureRect>("%SlideImage");
 		continueButton = GetNode<Button>("%ContinueButton");
+		previousButton = GetNode<Button>("%PreviousButton");
 		closeWindowButton = GetNode<Button>("%CloseWindowButton");
 		quitTutorialButton = GetNode<Button>("%QuitTutorialButton");
+		slideProgressLabel = GetNode<Label>("%SlideProgressLabel");
 		tutorialCursor = GetNodeOrNull<Cursor>("/root/Cursor");
 
 		AudioHelpers.RegisterButtons(new Button[] {
 			continueButton,
+			previousButton,
 			closeWindowButton,
 			quitTutorialButton
 		});
 		continueButton.Pressed += OnContinuePressed;
+		previousButton.Pressed += OnPreviousPressed;
 		closeWindowButton.Pressed += OnCloseWindowPressed;
 		quitTutorialButton.Pressed += OnQuitTutorialPressed;
 		GetViewport().SizeChanged += RefreshLayout;
@@ -91,6 +103,10 @@ public partial class TutorialOverlay : CanvasLayer
 		if (continueButton != null)
 		{
 			continueButton.Pressed -= OnContinuePressed;
+		}
+		if (previousButton != null)
+		{
+			previousButton.Pressed -= OnPreviousPressed;
 		}
 		if (closeWindowButton != null)
 		{
@@ -144,15 +160,30 @@ public partial class TutorialOverlay : CanvasLayer
 		bool showContinue = true,
 		bool showQuitTutorial = true,
 		bool dimBackground = true,
-		TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto)
+		TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto,
+		string imagePath = null,
+		bool showPrevious = false,
+		string progressText = null)
 	{
 		titleLabel.Text = title ?? string.Empty;
 		bodyLabel.Text = message ?? string.Empty;
 		requestedFocusRect = targetScreenRect;
 		requestedCalloutPlacement = calloutPlacement;
+		if (presentationMode)
+		{
+			bool fullScreenSlide = calloutPlacement == TutorialCalloutPlacement.FullScreen;
+			titleLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 42 : 34);
+			bodyLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 26 : 23);
+		}
 		continueButton.Visible = showContinue;
-		closeWindowButton.Visible = true;
+		previousButton.Visible = presentationMode && showPrevious;
+		slideProgressLabel.Visible = presentationMode && !string.IsNullOrWhiteSpace(progressText);
+		slideProgressLabel.Text = progressText ?? string.Empty;
+		// Presentation slides already provide explicit Back, Next, and Exit controls.
+		// Hiding the tutorial-only close action avoids accidentally advancing a slide.
+		closeWindowButton.Visible = !presentationMode;
 		quitTutorialButton.Visible = showQuitTutorial;
+		SetSlideImage(imagePath);
 
 		// A guided step with no resolved target is the safe text-only fallback: the dimmer remains
 		// visible, but input passes through so a missing registration cannot trap the player.
@@ -174,6 +205,69 @@ public partial class TutorialOverlay : CanvasLayer
 		{
 			continueButton.GrabFocus();
 		}
+	}
+
+	/// <summary>Switches the shared tutorial overlay into a conference-slide layout.</summary>
+	public void ConfigurePresentationMode(bool enabled)
+	{
+		presentationMode = enabled;
+		Font presentationFont = enabled
+			? GD.Load<Font>("res://resources/Inter-VariableFont_opsz,wght.ttf")
+			: null;
+
+		ApplyPresentationFont(titleLabel, presentationFont);
+		ApplyPresentationFont(bodyLabel, presentationFont);
+		ApplyPresentationFont(continueButton, presentationFont);
+		ApplyPresentationFont(previousButton, presentationFont);
+		ApplyPresentationFont(closeWindowButton, presentationFont);
+		ApplyPresentationFont(quitTutorialButton, presentationFont);
+		ApplyPresentationFont(slideProgressLabel, presentationFont);
+
+		if (enabled)
+		{
+			titleLabel.AddThemeFontSizeOverride("font_size", 34);
+			bodyLabel.AddThemeFontSizeOverride("font_size", 23);
+			continueButton.Text = "NEXT";
+			quitTutorialButton.Text = "EXIT PRESENTATION";
+			closeWindowButton.Text = "HIDE SLIDE  X";
+		}
+		else
+		{
+			titleLabel.AddThemeFontSizeOverride("font_size", 28);
+			bodyLabel.AddThemeFontSizeOverride("font_size", 19);
+			continueButton.Text = "CONTINUE";
+			quitTutorialButton.Text = "QUIT TUTORIAL";
+			closeWindowButton.Text = "CLOSE WINDOW  X";
+		}
+	}
+
+	private static void ApplyPresentationFont(Control control, Font font)
+	{
+		if (font == null)
+		{
+			control.RemoveThemeFontOverride("font");
+			return;
+		}
+		control.AddThemeFontOverride("font", font);
+	}
+
+	private void SetSlideImage(string imagePath)
+	{
+		slideImage.Texture = null;
+		slideImage.Visible = false;
+		if (string.IsNullOrWhiteSpace(imagePath))
+		{
+			return;
+		}
+
+		if (!ResourceLoader.Exists(imagePath))
+		{
+			GD.PushWarning($"Tutorial slide image does not exist: '{imagePath}'.");
+			return;
+		}
+
+		slideImage.Texture = GD.Load<Texture2D>(imagePath);
+		slideImage.Visible = slideImage.Texture != null;
 	}
 
 	public void SetFocusRect(Rect2? targetScreenRect)
@@ -200,6 +294,11 @@ public partial class TutorialOverlay : CanvasLayer
 		{
 			overlayRoot.Visible = false;
 		}
+		if (slideImage != null)
+		{
+			slideImage.Texture = null;
+			slideImage.Visible = false;
+		}
 		tutorialCursor?.SetPopupCursorOverride(false);
 	}
 
@@ -215,7 +314,8 @@ public partial class TutorialOverlay : CanvasLayer
 		visibleFocusRect = CalculateVisibleFocusRect(viewportSize);
 		LayoutBlockers(viewportSize, visibleFocusRect);
 
-		bool hasFocus = requestedFocusRect.HasValue && visibleFocusRect.Size.X > 0f &&
+		bool hasFocus = requestedCalloutPlacement != TutorialCalloutPlacement.FullScreen &&
+			requestedFocusRect.HasValue && visibleFocusRect.Size.X > 0f &&
 			visibleFocusRect.Size.Y > 0f;
 		focusBorder.Visible = hasFocus;
 		if (hasFocus)
@@ -266,9 +366,20 @@ public partial class TutorialOverlay : CanvasLayer
 
 	private void LayoutCallout(Vector2 viewportSize, bool hasFocus)
 	{
+		if (requestedCalloutPlacement == TutorialCalloutPlacement.FullScreen)
+		{
+			Vector2 fullScreenSize = new(
+				Mathf.Max(240f, viewportSize.X),
+				Mathf.Max(160f, viewportSize.Y));
+			callout.Position = Vector2.Zero;
+			callout.Size = fullScreenSize;
+			ApplyRect(calloutAttentionBorder, new Rect2(callout.Position, fullScreenSize));
+			return;
+		}
+
 		Vector2 minimumSize = callout.GetCombinedMinimumSize();
-		minimumSize.X = Mathf.Max(minimumSize.X, 460f);
-		minimumSize.Y = Mathf.Max(minimumSize.Y, 190f);
+		minimumSize.X = Mathf.Max(minimumSize.X, presentationMode ? 820f : 460f);
+		minimumSize.Y = Mathf.Max(minimumSize.Y, presentationMode ? 400f : 190f);
 		minimumSize.X = Mathf.Min(minimumSize.X, Mathf.Max(240f, viewportSize.X - (ViewportMargin * 2f)));
 		minimumSize.Y = Mathf.Min(minimumSize.Y, Mathf.Max(160f, viewportSize.Y - (ViewportMargin * 2f)));
 		callout.Size = minimumSize;
@@ -390,6 +501,11 @@ public partial class TutorialOverlay : CanvasLayer
 	private void OnContinuePressed()
 	{
 		EmitSignal(SignalName.ContinueRequested);
+	}
+
+	private void OnPreviousPressed()
+	{
+		EmitSignal(SignalName.PreviousRequested);
 	}
 
 	private void OnCloseWindowPressed()

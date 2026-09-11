@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/tutorial/TutorialOverlay.cs" id="1_overlay"]
 [ext_resource type="Theme" uid="uid://lrxwuh3o4l5k" path="res://resources/sci-fi-theme.tres" id="2_theme"]
+[ext_resource type="FontFile" uid="uid://b58qupht0etta" path="res://resources/Inter-VariableFont_opsz,wght.ttf" id="3_inter"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_focus"]
 bg_color = Color(0, 0, 0, 0)
@@ -172,13 +173,38 @@ theme_override_font_sizes/font_size = 19
 text = "Tutorial instruction"
 autowrap_mode = 3
 
+[node name="SlideImage" type="TextureRect" parent="OverlayRoot/Callout/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Actions" type="HBoxContainer" parent="OverlayRoot/Callout/Margin/Content"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
+[node name="PreviousButton" type="Button" parent="OverlayRoot/Callout/Margin/Content/Actions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(130, 44)
+layout_mode = 2
+text = "BACK"
+
 [node name="Spacer" type="Control" parent="OverlayRoot/Callout/Margin/Content/Actions"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="SlideProgressLabel" type="Label" parent="OverlayRoot/Callout/Margin/Content/Actions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_inter")
+theme_override_font_sizes/font_size = 17
+text = "1 / 1"
+vertical_alignment = 1
 
 [node name="ContinueButton" type="Button" parent="OverlayRoot/Callout/Margin/Content/Actions"]
 unique_name_in_owner = true

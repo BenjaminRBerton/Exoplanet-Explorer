@@ -117,9 +117,12 @@ public partial class BaseLevel : Node
 			foreach (MonolithFragment fragment in this.GetNodesOfType<MonolithFragment>())
 				fragment.SetVariant(MonolithFragment.Variant.Hominid);
 		}
-		bool hasPreplacedBase = levelDefinitionResource.Id != TutorialCatalog.Level2Id;
 		BuildingComponent tutorialBase = BuildingComponent.GetBaseBuilding(this).FirstOrDefault();
-		if (hasPreplacedBase && !GodotObject.IsInstanceValid(tutorialBase))
+		bool hasPreplacedBase = GodotObject.IsInstanceValid(tutorialBase);
+		bool requiresPreplacedBase =
+			levelDefinitionResource.Id == TutorialCatalog.Level1Id ||
+			levelDefinitionResource.Id == TutorialCatalog.Level3Id;
+		if (requiresPreplacedBase && !hasPreplacedBase)
 		{
 			GD.PushWarning($"Tutorial level '{levelDefinitionResource.Id}' has no base.");
 			return;

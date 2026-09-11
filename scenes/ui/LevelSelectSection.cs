@@ -59,7 +59,10 @@ public partial class LevelSelectSection : PanelContainer
 		levelNumberLabel.Text = $"Level {index + 1}";
 	}
 
-	public void SetTutorialAvailability(bool hasTutorial, bool tutorialPreviouslyStarted)
+	public void SetTutorialAvailability(
+		bool hasTutorial,
+		bool tutorialPreviouslyStarted,
+		bool isPresentation = false)
 	{
 		if (!hasTutorial)
 		{
@@ -68,12 +71,18 @@ public partial class LevelSelectSection : PanelContainer
 			return;
 		}
 
-		levelNumberLabel.Text = $"Level {levelIndex + 1}\n(Tutorial)";
+		levelNumberLabel.Text = isPresentation
+			? $"Level {levelIndex + 1}\n(Presentation)"
+			: $"Level {levelIndex + 1}\n(Tutorial)";
 		tutorialStatusLabel.Visible = true;
-		tutorialStatusLabel.Text = tutorialPreviouslyStarted
-			? "Tutorial previously started"
-			: "Tutorial available";
-		button.Text = tutorialPreviouslyStarted ? "Choose mode" : "Start tutorial";
+		tutorialStatusLabel.Text = isPresentation
+			? "Conference presentation"
+			: tutorialPreviouslyStarted
+				? "Tutorial previously started"
+				: "Tutorial available";
+		button.Text = isPresentation
+			? "Start presentation"
+			: tutorialPreviouslyStarted ? "Choose mode" : "Start tutorial";
 	}
 
 	private void OnButtonPressed()

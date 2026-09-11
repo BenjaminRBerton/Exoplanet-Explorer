@@ -63,6 +63,7 @@ public enum TutorialCalloutPlacement
 	Auto,
 	TopLeft,
 	TopRight,
+	FullScreen,
 }
 
 public sealed class TutorialEventContext
@@ -207,6 +208,7 @@ public sealed class TutorialStep
 	public bool Skippable { get; }
 	public bool DimBackground { get; }
 	public TutorialCalloutPlacement CalloutPlacement { get; }
+	public string ImagePath { get; }
 
 	internal TutorialStep(
 		string id,
@@ -219,7 +221,8 @@ public sealed class TutorialStep
 		double missingTargetTimeoutSeconds,
 		bool skippable,
 		bool dimBackground,
-		TutorialCalloutPlacement calloutPlacement)
+		TutorialCalloutPlacement calloutPlacement,
+		string imagePath)
 	{
 		Id = id;
 		Title = title;
@@ -232,6 +235,7 @@ public sealed class TutorialStep
 		Skippable = skippable;
 		DimBackground = dimBackground;
 		CalloutPlacement = calloutPlacement;
+		ImagePath = imagePath;
 	}
 }
 
