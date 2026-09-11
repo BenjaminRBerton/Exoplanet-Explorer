@@ -38,7 +38,8 @@ public partial class LevelSelectScreen : MarginContainer
 			levelSelectSection.SetLevelIndex(i);
 			levelSelectSection.SetTutorialAvailability(
 				TutorialCatalog.HasTutorial(levelDefinition.Id),
-				SaveManager.HasTutorialStarted(levelDefinition.Id));
+				SaveManager.HasTutorialStarted(levelDefinition.Id),
+				TutorialCatalog.IsPresentation(levelDefinition.Id));
 			levelSelectSection.LevelSelected += OnLevelSelected;
 		}
 
@@ -58,6 +59,11 @@ public partial class LevelSelectScreen : MarginContainer
 		if (!TutorialCatalog.HasTutorial(levelDefinition.Id))
 		{
 			LevelManager.ChangeToLevel(levelIndex, tutorialMode: false);
+			return;
+		}
+		if (TutorialCatalog.IsPresentation(levelDefinition.Id))
+		{
+			StartTutorial(levelIndex);
 			return;
 		}
 

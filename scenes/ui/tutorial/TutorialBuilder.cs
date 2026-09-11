@@ -6,6 +6,8 @@ namespace Game.UI.Tutorial;
 
 public abstract class TutorialScript
 {
+	public virtual bool UsesPresentationLayout => false;
+
 	public abstract void Build(TutorialBuilder tutorial);
 
 	public IReadOnlyList<TutorialStep> CreateSteps()
@@ -83,6 +85,7 @@ public sealed class TutorialStepBuilder
 	private bool skippable = true;
 	private bool dimBackground = true;
 	private TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto;
+	private string imagePath;
 
 	internal TutorialStepBuilder(string id, string defaultPreviousStepId)
 	{
@@ -153,6 +156,13 @@ public sealed class TutorialStepBuilder
 		return this;
 	}
 
+	/// <summary>Adds a project image below the slide text.</summary>
+	public TutorialStepBuilder WithImage(string resourcePath)
+	{
+		imagePath = resourcePath;
+		return this;
+	}
+
 	public TutorialStepBuilder UntilContinue()
 	{
 		completion = TutorialCompletion.Continue();
@@ -215,6 +225,7 @@ public sealed class TutorialStepBuilder
 			missingTargetTimeoutSeconds,
 			skippable,
 			dimBackground,
-			calloutPlacement);
+			calloutPlacement,
+			imagePath);
 	}
 }

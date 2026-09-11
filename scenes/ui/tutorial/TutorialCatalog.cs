@@ -11,17 +11,24 @@ public static class TutorialCatalog
 	public const string Level1Id = "when_cucumbers_fall";
 	public const string Level2Id = "cats_are_playing";
 	public const string Level3Id = "concrete_bricks";
+	public const string Level7PresentationId = "conference_demo";
 
 	private static readonly HashSet<string> TutorialLevelIds = new()
 	{
 		Level1Id,
 		Level2Id,
 		Level3Id,
+		Level7PresentationId,
 	};
 
 	public static bool HasTutorial(string levelId)
 	{
 		return !string.IsNullOrWhiteSpace(levelId) && TutorialLevelIds.Contains(levelId);
+	}
+
+	public static bool IsPresentation(string levelId)
+	{
+		return levelId == Level7PresentationId;
 	}
 
 	public static bool TryCreateScript(
@@ -34,6 +41,7 @@ public static class TutorialCatalog
 			Level1Id when context != null => new Scripts.Level1Tutorial(context),
 			Level2Id when context != null => new Scripts.Level2Tutorial(context),
 			Level3Id when context != null => new Scripts.Level3Tutorial(context),
+			Level7PresentationId => new Scripts.Level7Presentation(),
 			_ => null,
 		};
 		return script != null;
