@@ -1257,7 +1257,15 @@ public partial class GameUI : CanvasLayer
 				
 				// Request planner for path from currentPos -> waypoint
 				var segTcs = new System.Threading.Tasks.TaskCompletionSource<List<Vector2I>>();
-				buildingManager.RequestPath(robot, currentPos, waypoint.GridPosition, false, null, null, (result) => segTcs.TrySetResult(result));
+				buildingManager.RequestPath(
+					robot,
+					currentPos,
+					waypoint.GridPosition,
+					false,
+					null,
+					null,
+					robot.GetKnownNavigationTilesSnapshot(),
+					result => segTcs.TrySetResult(result));
 				var segPositions = await segTcs.Task;
 				if (segPositions == null || segPositions.Count == 0)
 				{
@@ -1348,7 +1356,15 @@ public partial class GameUI : CanvasLayer
 				
 				// Request planner for path
 				var segTcs = new System.Threading.Tasks.TaskCompletionSource<List<Vector2I>>();
-				buildingManager.RequestPath(robot, currentPos, targetPos, false, null, null, (result) => segTcs.TrySetResult(result));
+				buildingManager.RequestPath(
+					robot,
+					currentPos,
+					targetPos,
+					false,
+					null,
+					null,
+					robot.GetKnownNavigationTilesSnapshot(),
+					result => segTcs.TrySetResult(result));
 				var segPositions = await segTcs.Task;
 				if (segPositions == null || segPositions.Count == 0)
 				{

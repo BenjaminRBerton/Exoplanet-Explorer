@@ -162,6 +162,7 @@ public partial class BuildingComponent : Node2D
 			Callable.From<BuildingComponent, BuildingComponent>(OnLiftRobotButtonPressed));
 		robotSprite = GetNode<AnimatedSprite2D>("%GroundRobotAnimatedSprite2D");
 		}
+
 	}
 
 	private void OnLiftRobotButtonPressed(BuildingComponent buildingComponent, BuildingComponent groundRobot)
@@ -288,6 +289,39 @@ public partial class BuildingComponent : Node2D
 		{
 			_discoveredTilesCache.Add(tile);
 		}
+	}
+
+	private void RevealNavigationTilesAround(Vector2I position)
+	{
+		if (gridManager == null || BuildingResource == null)
+		{
+			return;
+		}
+		bool isSensorUnit = BuildingResource.IsBase ||
+			BuildingResource.IsAerial ||
+			BuildingResource.DisplayName == "Rover";
+		if (!isSensorUnit)
+		{
+			return;
+		}
+
+		var visibleArea = GetAreaOccupied(position);
+		foreach (var tile in gridManager.GetTilesInRadius(
+			visibleArea,
+			BuildingResource.VisionRadius))
+		{
+			if (gridManager.IsTileWithinMapBounds(tile))
+			{
+				buildingManager?.SharedDiscoveredNavigationTiles.Add(tile);
+			}
+		}
+	}
+
+	public HashSet<Vector2I> GetKnownNavigationTilesSnapshot()
+	{
+		RevealNavigationTilesAround(GetGridCellPosition());
+		return buildingManager?.SharedDiscoveredNavigationTiles.ToHashSet()
+			?? new HashSet<Vector2I>();
 	}
 
 	public void EnableRandomMode()
@@ -444,6 +478,7 @@ public partial class BuildingComponent : Node2D
 		GameEvents.EmitBuildingMoved(this);
 		buildingAnimatorComponent?.PlayMoveAnimation(originPos, destinationPos);
 		CalculateOccupiedCellPositions();
+		RevealNavigationTilesAround(destinationPos);
 		if (IsLifting)
 		{
 			if (Battery >= 0) Battery -= 20;
@@ -807,7 +842,13 @@ public partial class BuildingComponent : Node2D
 		return moves;
 	}
 
-	private async System.Threading.Tasks.Task<List<string>> RequestPathMovesAsync(Vector2I start, Vector2I target)
+	private async System.Threading.Tasks.Task<List<Vector2I>> RequestPathPositionsAsync(
+		Vector2I start,
+		Vector2I target,
+		bool allowBridges = false,
+		bool? bridgeElevationIsElevated = null,
+		HashSet<Vector2I> excludedPositions = null,
+		bool allowUnknownTiles = true)
 	{
 		var tcs = new System.Threading.Tasks.TaskCompletionSource<List<Vector2I>>();
 		buildingAnimatorComponent?.ShowLoading();
@@ -816,14 +857,216 @@ public partial class BuildingComponent : Node2D
 			this,
 			start,
 			target,
-			allowBridges: false,
-			bridgeElevationIsElevated: null,
-			excludedPositions: null,
-			callback: path => tcs.TrySetResult(path));
+			allowBridges: allowBridges,
+			bridgeElevationIsElevated: bridgeElevationIsElevated,
+			excludedPositions: excludedPositions,
+			knownTiles: GetKnownNavigationTilesSnapshot(),
+			callback: path => tcs.TrySetResult(path),
+			allowUnknownTiles: allowUnknownTiles);
 
 		var pathPositions = await tcs.Task;
 		buildingAnimatorComponent?.HideLoading();
-		return ConvertPathPositionsToMoves(pathPositions);
+		return pathPositions;
+	}
+
+	private async System.Threading.Tasks.Task<List<string>> RequestPathMovesAsync(Vector2I start, Vector2I target)
+	{
+		return ConvertPathPositionsToMoves(await RequestPathPositionsAsync(start, target));
+	}
+
+	private HashSet<Vector2I> GetRequiredBridgeTiles(List<Vector2I> path)
+	{
+		var requiredTiles = new HashSet<Vector2I>();
+		if (path == null)
+		{
+			return requiredTiles;
+		}
+
+		for (int index = 1; index < path.Count; index++)
+		{
+			var originArea = GetAreaOccupied(path[index - 1]);
+			var destinationArea = GetAreaOccupied(path[index]);
+			if (!gridManager.IsBuildingMovable(this, originArea, destinationArea))
+			{
+				requiredTiles.Add(path[index]);
+			}
+		}
+
+		return requiredTiles;
+	}
+
+	private async System.Threading.Tasks.Task<bool> NavigateAdaptivelyAsync(
+		Vector2I targetPosition,
+		bool updatePathPreview,
+		bool reportUnreachable = true)
+	{
+		while (GetGridCellPosition() != targetPosition)
+		{
+			if (cancelMoveRequested || currentExplorMode == ExplorMode.None || IsStuck || Battery <= 0)
+			{
+				return false;
+			}
+
+			Vector2I currentPosition = GetGridCellPosition();
+			var knownTiles = GetKnownNavigationTilesSnapshot();
+			if (gridManager.IsKnownDestinationOnDifferentElevation(
+				this,
+				currentPosition,
+				targetPosition,
+				knownTiles))
+			{
+				if (reportUnreachable)
+				{
+					const string message = "Destination is on another elevation layer";
+					FloatingTextManager.ShowMessageAtBuildingPosition(message, this);
+					Game.UI.GameUI.PushMessage(message, "red", true, this);
+				}
+				return false;
+			}
+
+			List<Vector2I> plannedPath = null;
+			bool pathUsesBridges = false;
+			bool bridgeElevationIsElevated = false;
+
+			// If the team has already observed the destination, first reason only
+			// over its shared evidence. A bridge is justified when there is no fully
+			// known land route but there is a fully known bridge route. Unknown tiles
+			// therefore never trigger speculative construction.
+			if (!BuildingResource.IsAerial && knownTiles.Contains(targetPosition))
+			{
+				plannedPath = await RequestPathPositionsAsync(
+					currentPosition,
+					targetPosition,
+					allowUnknownTiles: false);
+
+				if (plannedPath == null || plannedPath.Count < 2)
+				{
+					(_, bridgeElevationIsElevated) = gridManager.GetElevationLayerForTile(currentPosition);
+					var knownBridgePath = await RequestPathPositionsAsync(
+						currentPosition,
+						targetPosition,
+						allowBridges: true,
+						bridgeElevationIsElevated: bridgeElevationIsElevated,
+						allowUnknownTiles: false);
+					var requiredBridgeTiles = GetRequiredBridgeTiles(knownBridgePath);
+
+					if (knownBridgePath != null && knownBridgePath.Count >= 2 &&
+						requiredBridgeTiles.Count > 0)
+					{
+						if (numberOfWoodCarried < requiredBridgeTiles.Count)
+						{
+							string message = $"Need {requiredBridgeTiles.Count} wood to cross; carrying {numberOfWoodCarried}";
+							FloatingTextManager.ShowMessageAtBuildingPosition(message, this);
+							Game.UI.GameUI.PushMessage(message, "yellow", false, this);
+							return false;
+						}
+
+						plannedPath = knownBridgePath;
+						pathUsesBridges = true;
+					}
+				}
+			}
+
+			// No conclusive all-known route yet: continue exploring optimistically.
+			if (plannedPath == null || plannedPath.Count < 2)
+			{
+				plannedPath = await RequestPathPositionsAsync(
+					currentPosition,
+					targetPosition);
+			}
+
+			if ((plannedPath == null || plannedPath.Count < 2) && !BuildingResource.IsAerial)
+			{
+				(_, bridgeElevationIsElevated) = gridManager.GetElevationLayerForTile(currentPosition);
+				plannedPath = await RequestPathPositionsAsync(
+					currentPosition,
+					targetPosition,
+					allowBridges: true,
+					bridgeElevationIsElevated: bridgeElevationIsElevated);
+				pathUsesBridges = plannedPath != null && plannedPath.Count >= 2;
+			}
+
+			if (plannedPath == null || plannedPath.Count < 2)
+			{
+				if (reportUnreachable)
+				{
+					FloatingTextManager.ShowMessageAtBuildingPosition("No path found", this);
+					Game.UI.GameUI.PushMessage("No path found", "red", true, this);
+				}
+				return false;
+			}
+
+			if (updatePathPreview)
+			{
+				RefreshAdaptivePathPreview(currentPosition, plannedPath);
+			}
+
+			Vector2I nextPosition = plannedPath[1];
+			StringName direction = GetDirection(currentPosition, nextPosition);
+			if (direction.ToString().Length == 0)
+			{
+				return false;
+			}
+
+			var originArea = GetAreaOccupied(currentPosition);
+			var destinationArea = GetAreaOccupied(nextPosition);
+			if (pathUsesBridges &&
+				!gridManager.IsBuildingMovable(this, originArea, destinationArea))
+			{
+				if (numberOfWoodCarried <= 0)
+				{
+					Game.UI.GameUI.PushMessage("Need wood to continue across this terrain", "yellow", false, this);
+					return false;
+				}
+
+				string orientation = nextPosition.X != currentPosition.X ? "horizontal" : "vertical";
+				if (!gridManager.TryPlaceBridgeTile(originArea, destinationArea, orientation))
+				{
+					return false;
+				}
+				RemoveResource("wood");
+				Game.UI.GameUI.PushMessage("Rover built a bridge to continue its route", "green", false, this);
+				await ToSignal(GetTree().CreateTimer(BuildingResource.moveInterval), "timeout");
+			}
+
+			bool moveSucceeded = BuildingResource.IsAerial && IsLifting &&
+				GodotObject.IsInstanceValid(AttachedRobot)
+					? MoveLiftedPair(direction)
+					: buildingManager.MoveInDirectionAutomated(this, direction);
+			if (!moveSucceeded)
+			{
+				return false;
+			}
+
+			// Moved() expands this robot's remembered navigation map. Yield for the
+			// movement interval before the next cooperative A* replan.
+			await ToSignal(GetTree().CreateTimer(BuildingResource.moveInterval), "timeout");
+		}
+
+		return true;
+	}
+
+	private void RefreshAdaptivePathPreview(
+		Vector2I currentPosition,
+		List<Vector2I> plannedPath)
+	{
+		var proposedFuture = plannedPath.Skip(1).ToList();
+		int currentPreviewIndex = paintedTiles.FindIndex(tile =>
+			tile.GridPosition == currentPosition);
+		var displayedFuture = currentPreviewIndex >= 0
+			? paintedTiles.Skip(currentPreviewIndex + 1).Select(tile => tile.GridPosition)
+			: paintedTiles.Select(tile => tile.GridPosition);
+
+		if (displayedFuture.SequenceEqual(proposedFuture))
+		{
+			return;
+		}
+
+		buildingManager.ClearAllPaintedTiles(this);
+		foreach (var position in proposedFuture)
+		{
+			buildingManager.CreatePaintedTileAt(position, robot: this);
+		}
 	}
 
 	public async void MoveAlongPath(Vector2I targetPosition, bool astar=false)
@@ -884,6 +1127,15 @@ public partial class BuildingComponent : Node2D
 		{
 			currentExplorMode = ExplorMode.MoveToPos;
 			EmitSignal(SignalName.ModeChanged, currentExplorMode.ToString());
+		}
+		if (astar)
+		{
+			await NavigateAdaptivelyAsync(targetPosition, updatePathPreview: true);
+			currentExplorMode = ExplorMode.None;
+			CanMove = true;
+			buildingManager.ClearAllPaintedTiles(this);
+			EmitSignal(SignalName.ModeChanged, currentExplorMode.ToString());
+			return;
 		}
 		if (astar)
 		{
@@ -1059,10 +1311,88 @@ public partial class BuildingComponent : Node2D
 	}
 
 	/// <summary>
-	/// Execute a series of waypoints smoothly without stopping between each one.
-	/// Uses A* to find the complete path through all waypoints, then executes it as one continuous movement.
-	/// Supports lift/drop operations if annotations contain "LIFT" or "DROP" keywords.
+	/// Executes waypoints using the robot's remembered sensor data, replanning after
+	/// every movement step as new terrain enters its vision radius. Supports
+	/// lift/drop operations if annotations contain "LIFT" or "DROP" keywords.
 	/// </summary>
+	private async System.Threading.Tasks.Task<bool> ExecuteAdaptiveWaypointsAsync(
+		List<Vector2I> waypoints,
+		Dictionary<Vector2I, string> waypointAnnotations)
+	{
+		foreach (var waypoint in waypoints)
+		{
+			if (cancelMoveRequested || currentExplorMode == ExplorMode.None || IsStuck || Battery <= 0)
+			{
+				break;
+			}
+
+			bool reached = GetGridCellPosition() == waypoint ||
+				await NavigateAdaptivelyAsync(
+					waypoint,
+					updatePathPreview: false,
+					reportUnreachable: false);
+			if (!reached)
+			{
+				if (cancelMoveRequested || currentExplorMode == ExplorMode.None || IsStuck || Battery <= 0)
+				{
+					break;
+				}
+
+				Game.UI.GameUI.PushMessage(
+					$"Skipped unreachable waypoint ({waypoint.X}, {waypoint.Y})",
+					"yellow",
+					false,
+					this);
+				continue;
+			}
+
+			if (waypointAnnotations != null &&
+				waypointAnnotations.TryGetValue(waypoint, out string annotation))
+			{
+				await ApplyWaypointAnnotationAsync(annotation);
+			}
+		}
+
+		return true;
+	}
+
+	private async System.Threading.Tasks.Task ApplyWaypointAnnotationAsync(string annotation)
+	{
+		string normalizedAnnotation = annotation?.ToLowerInvariant() ?? string.Empty;
+		if (normalizedAnnotation.Contains("lift") && AttachedRobot == null && BuildingResource.IsAerial)
+		{
+			Vector2I groundPosition = GetGridCellPosition() + Vector2I.Down;
+			var robotToLift = gridManager.GetRobotAtPosition(groundPosition);
+			if (robotToLift != null && !robotToLift.BuildingResource.IsAerial)
+			{
+				AttachToRobot(robotToLift);
+				robotToLift.AttachToRobot(this);
+				Game.UI.GameUI.PushMessage(
+					$"Lifted {robotToLift.BuildingResource.DisplayName}!",
+					"green",
+					false,
+					this);
+				await ToSignal(GetTree().CreateTimer(0.3f), "timeout");
+			}
+			else
+			{
+				Game.UI.GameUI.PushMessage("No robot found to lift!", "yellow", false, this);
+			}
+		}
+		else if (normalizedAnnotation.Contains("drop") && AttachedRobot != null)
+		{
+			var droppedRobot = AttachedRobot;
+			DetachRobot();
+			droppedRobot.DetachRobot();
+			Game.UI.GameUI.PushMessage(
+				$"Dropped {droppedRobot.BuildingResource.DisplayName}!",
+				"green",
+				false,
+				this);
+			await ToSignal(GetTree().CreateTimer(0.3f), "timeout");
+		}
+	}
+
 	public async void ExecuteWaypointPath(List<Vector2I> waypoints, Dictionary<Vector2I, string> waypointAnnotations = null)
 	{
 		if (waypoints == null || waypoints.Count == 0)
@@ -1111,6 +1441,22 @@ public partial class BuildingComponent : Node2D
 		// Set movement mode
 		currentExplorMode = ExplorMode.MoveToPos;
 		EmitSignal(SignalName.ModeChanged, currentExplorMode.ToString());
+
+		if (await ExecuteAdaptiveWaypointsAsync(waypoints, waypointAnnotations))
+		{
+			if (AttachedRobot != null)
+			{
+				var stillAttached = AttachedRobot;
+				DetachRobot();
+				stillAttached.DetachRobot();
+			}
+			currentExplorMode = ExplorMode.None;
+			CanMove = true;
+			buildingManager.ClearAllPaintedTiles(this);
+			GameEvents.EmitRobotBackToIdle(this);
+			EmitSignal(SignalName.ModeChanged, currentExplorMode.ToString());
+			return;
+		}
 		
 		GD.Print($"{BuildingResource.DisplayName}: Executing path through {waypoints.Count} waypoints");
 		
@@ -1717,6 +2063,9 @@ public partial class BuildingComponent : Node2D
 	private void Initialize()
 	{
 		CalculateOccupiedCellPositions();
+		// Deferred initialization runs after the managers are ready, ensuring the
+		// stationary base also contributes its initial sensor footprint.
+		RevealNavigationTilesAround(GetGridCellPosition());
 		GameEvents.EmitBuildingPlaced(this);
 	}
 
