@@ -17,40 +17,74 @@ public class PathPlannerJob
     private readonly bool allowBridges;
     private readonly bool? bridgeElevationIsElevated;
     private readonly HashSet<Vector2I> excludedPositions;
+    private readonly IReadOnlySet<Vector2I> knownTiles;
+    private readonly bool allowUnknownTiles;
+    private readonly Vector2I start;
     private readonly Vector2I target;
 
-    private List<PathNode> open = new();
-    private HashSet<Vector2I> closed = new();
+    private readonly PriorityQueue<PathNode, int> open = new();
+    private readonly Dictionary<Vector2I, int> bestCosts = new();
+    private readonly HashSet<Vector2I> closed = new();
 
     public bool Completed { get; private set; } = false;
     public List<Vector2I> Result { get; private set; } = null;
     public Action<List<Vector2I>> OnComplete { get; }
 
-    public PathPlannerJob(GridManager gridManager, BuildingComponent robot, Vector2I start, Vector2I target, bool allowBridges, bool? bridgeElevationIsElevated, HashSet<Vector2I> excludedPositions, Action<List<Vector2I>> onComplete)
+    public PathPlannerJob(
+        GridManager gridManager,
+        BuildingComponent robot,
+        Vector2I start,
+        Vector2I target,
+        bool allowBridges,
+        bool? bridgeElevationIsElevated,
+        HashSet<Vector2I> excludedPositions,
+        IReadOnlySet<Vector2I> knownTiles,
+        bool allowUnknownTiles,
+        Action<List<Vector2I>> onComplete)
     {
         this.gridManager = gridManager ?? throw new ArgumentNullException(nameof(gridManager));
         this.robot = robot;
+        this.start = start;
         this.target = target;
         this.allowBridges = allowBridges;
         this.bridgeElevationIsElevated = bridgeElevationIsElevated;
         this.excludedPositions = excludedPositions;
+        this.knownTiles = knownTiles ?? throw new ArgumentNullException(nameof(knownTiles));
+        this.allowUnknownTiles = allowUnknownTiles;
         this.OnComplete = onComplete;
 
-        open.Add(new PathNode(start, null, 0, Heuristic(start, target)));
+        var startNode = new PathNode(start, null, 0, Heuristic(start, target));
+        open.Enqueue(startNode, startNode.F);
+        bestCosts[start] = 0;
     }
 
     public void Step(int maxIterations)
     {
         if (Completed) return;
+		if (gridManager.IsKnownDestinationOnDifferentElevation(
+			robot,
+			start,
+			target,
+			knownTiles))
+		{
+			Completed = true;
+			Result = null;
+			OnComplete?.Invoke(null);
+			return;
+		}
 
         int iterations = 0;
         while (open.Count > 0 && iterations < maxIterations)
         {
             iterations++;
 
-            open.Sort((a, b) => a.F.CompareTo(b.F));
-            var current = open[0];
-            open.RemoveAt(0);
+            var current = open.Dequeue();
+            if (closed.Contains(current.Position) ||
+                !bestCosts.TryGetValue(current.Position, out int bestCost) ||
+                current.G != bestCost)
+            {
+                continue;
+            }
             closed.Add(current.Position);
 
             if (current.Position == target)
@@ -86,27 +120,40 @@ public class PathPlannerJob
                 Rect2I originArea = new Rect2I(current.Position, Vector2I.One);
                 Rect2I destinationArea = new Rect2I(neighborPos, Vector2I.One);
 
-                if (!gridManager.IsBuildingMovable(robot, originArea, destinationArea, allowBridges, bridgeElevationIsElevated))
+                if (!gridManager.IsNavigationStepTraversable(
+                    robot,
+                    originArea,
+                    destinationArea,
+                    knownTiles,
+                    allowBridges,
+                    bridgeElevationIsElevated,
+                    allowUnknownTiles))
                 {
                     continue;
                 }
 
-                int gCost = current.G + 1;
+                int movementCost = 1;
+                bool stepIsKnown = originArea.ToTiles().All(knownTiles.Contains) &&
+                    destinationArea.ToTiles().All(knownTiles.Contains);
+                if (allowBridges && stepIsKnown &&
+                    !gridManager.IsBuildingMovable(robot, originArea, destinationArea))
+                {
+                    // Prefer a longer dry route over consuming additional wood.
+                    movementCost += 10;
+                }
+
+                int gCost = current.G + movementCost;
                 int hCost = Heuristic(neighborPos, target);
 
-                var existing = open.FirstOrDefault(n => n.Position == neighborPos);
-                if (existing != null)
+                if (bestCosts.TryGetValue(neighborPos, out int existingCost) &&
+                    gCost >= existingCost)
                 {
-                    if (gCost < existing.G)
-                    {
-                        existing.G = gCost;
-                        existing.Parent = current;
-                    }
+                    continue;
                 }
-                else
-                {
-                    open.Add(new PathNode(neighborPos, current, gCost, hCost));
-                }
+
+                bestCosts[neighborPos] = gCost;
+                var neighbor = new PathNode(neighborPos, current, gCost, hCost);
+                open.Enqueue(neighbor, neighbor.F);
             }
         }
 

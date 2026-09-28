@@ -48,6 +48,11 @@ public partial class BuildingManager : Node
 	[Signal]
 	public delegate void NoMoreRobotSelectedEventHandler();
 	public List<Node2D> AliveRobots { get; private set; } = new();
+	/// <summary>
+	/// Persistent team-wide navigation knowledge. Bases, rovers, and drones all
+	/// publish the tiles inside their vision radius here and plan from the same map.
+	/// </summary>
+	public HashSet<Vector2I> SharedDiscoveredNavigationTiles { get; } = new();
 	private HashSet<string> analyzedMineralTypes = new();
 	private double clockTickTimer = 0.0;
 	
@@ -726,9 +731,28 @@ public partial class BuildingManager : Node
 	/// <summary>
 	/// Request a path to be planned cooperatively. The provided callback will be invoked when the job completes (path or null).
 	/// </summary>
-	public void RequestPath(BuildingComponent robot, Vector2I start, Vector2I target, bool allowBridges, bool? bridgeElevationIsElevated, HashSet<Vector2I> excludedPositions, Action<List<Vector2I>> callback)
+	public void RequestPath(
+		BuildingComponent robot,
+		Vector2I start,
+		Vector2I target,
+		bool allowBridges,
+		bool? bridgeElevationIsElevated,
+		HashSet<Vector2I> excludedPositions,
+		IReadOnlySet<Vector2I> knownTiles,
+		Action<List<Vector2I>> callback,
+		bool allowUnknownTiles = true)
 	{
-		var job = new PathPlannerJob(gridManager, robot, start, target, allowBridges, bridgeElevationIsElevated, excludedPositions, callback);
+		var job = new PathPlannerJob(
+			gridManager,
+			robot,
+			start,
+			target,
+			allowBridges,
+			bridgeElevationIsElevated,
+			excludedPositions,
+			knownTiles,
+			allowUnknownTiles,
+			callback);
 		plannerQueue.Enqueue(job);
 	}
 
@@ -1107,21 +1131,32 @@ public partial class BuildingManager : Node
 	/// <param name="excludedPositions">Optional set of positions to exclude from the path (e.g., erased tiles)</param>
 	private List<Vector2I> FindPathBetweenTiles(BuildingComponent robot, Vector2I startPos, Vector2I targetPos, HashSet<Vector2I> excludedPositions = null)
 	{
+		var knownTiles = robot.GetKnownNavigationTilesSnapshot();
+		if (gridManager.IsKnownDestinationOnDifferentElevation(
+			robot,
+			startPos,
+			targetPos,
+			knownTiles))
+		{
+			return null;
+		}
+
 		// First try without bridges
 		var path = FindPathBetweenTilesInternal(robot, startPos, targetPos, excludedPositions, false, null);
 		
 		// If no path found and robot is ground-based, try with bridge crossing
 		if (path == null && !robot.BuildingResource.IsAerial)
 		{
-			// Check if start and target are at the same elevation level (required for bridging)
-			var (startElevation, startIsElevated) = gridManager.GetElevationLayerForTile(startPos);
-			var (targetElevation, targetIsElevated) = gridManager.GetElevationLayerForTile(targetPos);
-			
-			if (startIsElevated == targetIsElevated)
-			{
-				// Try pathfinding with bridge crossing allowed
-				path = FindPathBetweenTilesInternal(robot, startPos, targetPos, excludedPositions, true, startIsElevated);
-			}
+			// The destination elevation may still be outside sensor range. Use only
+			// the known elevation under the robot and validate the far end later.
+			var (_, startIsElevated) = gridManager.GetElevationLayerForTile(startPos);
+			path = FindPathBetweenTilesInternal(
+				robot,
+				startPos,
+				targetPos,
+				excludedPositions,
+				true,
+				startIsElevated);
 		}
 		
 		return path;
@@ -1129,10 +1164,14 @@ public partial class BuildingManager : Node
 	
 	private List<Vector2I> FindPathBetweenTilesInternal(BuildingComponent robot, Vector2I startPos, Vector2I targetPos, HashSet<Vector2I> excludedPositions, bool allowBridges, bool? bridgeElevationIsElevated)
 	{
-		var open = new List<PathNode>();
+		var open = new PriorityQueue<PathNode, int>();
+		var bestCosts = new Dictionary<Vector2I, int>();
 		var closed = new HashSet<Vector2I>();
+		var knownTiles = robot.GetKnownNavigationTilesSnapshot();
 		
-		open.Add(new PathNode(startPos, null, 0, Heuristic(startPos, targetPos)));
+		var startNode = new PathNode(startPos, null, 0, Heuristic(startPos, targetPos));
+		open.Enqueue(startNode, startNode.F);
+		bestCosts[startPos] = 0;
 		
 		int maxIterations = 1000;
 		int iteration = 0;
@@ -1141,10 +1180,13 @@ public partial class BuildingManager : Node
 		{
 			iteration++;
 			
-			// Get node with lowest F cost
-			open.Sort((a, b) => a.F.CompareTo(b.F));
-			var current = open[0];
-			open.RemoveAt(0);
+			var current = open.Dequeue();
+			if (closed.Contains(current.Position) ||
+				!bestCosts.TryGetValue(current.Position, out int bestCost) ||
+				current.G != bestCost)
+			{
+				continue;
+			}
 			closed.Add(current.Position);
 			
 			// Check if we reached the target
@@ -1188,7 +1230,13 @@ public partial class BuildingManager : Node
 				Rect2I originArea = new Rect2I(current.Position, Vector2I.One);
 				Rect2I destinationArea = new Rect2I(neighborPos, Vector2I.One);
 				
-				if (!gridManager.IsBuildingMovable(robot, originArea, destinationArea, allowBridges, bridgeElevationIsElevated))
+				if (!gridManager.IsNavigationStepTraversable(
+					robot,
+					originArea,
+					destinationArea,
+					knownTiles,
+					allowBridges,
+					bridgeElevationIsElevated))
 				{
 					continue;
 				}
@@ -1196,22 +1244,15 @@ public partial class BuildingManager : Node
 				int gCost = current.G + 1;
 				int hCost = Heuristic(neighborPos, targetPos);
 				
-				// Check if this neighbor is already in open list
-				var existingNode = open.FirstOrDefault(n => n.Position == neighborPos);
-				if (existingNode != null)
+				if (bestCosts.TryGetValue(neighborPos, out int existingCost) &&
+					gCost >= existingCost)
 				{
-					// If we found a better path, update it
-					if (gCost < existingNode.G)
-					{
-						existingNode.G = gCost;
-						existingNode.Parent = current;
-					}
+					continue;
 				}
-				else
-				{
-					// Add new node to open list
-					open.Add(new PathNode(neighborPos, current, gCost, hCost));
-				}
+
+				bestCosts[neighborPos] = gCost;
+				var neighbor = new PathNode(neighborPos, current, gCost, hCost);
+				open.Enqueue(neighbor, neighbor.F);
 			}
 		}
 		
@@ -1221,18 +1262,32 @@ public partial class BuildingManager : Node
 
 	public List<PaintedTile> GetAllPaintedTiles()
 	{
+		var navigationKnowledge = new Dictionary<BuildingComponent, HashSet<Vector2I>>();
 		// Validate reachability for each painted tile using its associated robot
 		foreach (var paintedTile in paintedTiles)
 		{
 			if (paintedTile.AssociatedRobot != null)
 			{
+				if (!navigationKnowledge.TryGetValue(
+					paintedTile.AssociatedRobot,
+					out var knownTiles))
+				{
+					knownTiles = paintedTile.AssociatedRobot.GetKnownNavigationTilesSnapshot();
+					navigationKnowledge[paintedTile.AssociatedRobot] = knownTiles;
+				}
+
 				Rect2I robotArea = paintedTile.AssociatedRobot.GetTileArea();
 				
 				// Create destination area from painted tile position
 				Rect2I destinationArea = new Rect2I(paintedTile.GridPosition, Vector2I.One);
 				
 				// Check if the associated robot can move to this tile
-				bool isReachable = gridManager.IsBuildingMovable(paintedTile.AssociatedRobot, robotArea, destinationArea);
+				bool isReachable = gridManager.IsTileWithinMapBounds(paintedTile.GridPosition) &&
+					(!knownTiles.Contains(paintedTile.GridPosition) ||
+					gridManager.IsBuildingMovable(
+						paintedTile.AssociatedRobot,
+						robotArea,
+						destinationArea));
 				
 				// Set the reachability status on the painted tile
 				paintedTile.IsReachable = isReachable;
@@ -1277,6 +1332,7 @@ public partial class BuildingManager : Node
 		}
 		
 		Rect2I robotArea = robot.GetTileArea();
+		var knownTiles = robot.GetKnownNavigationTilesSnapshot();
 		
 		// Create a dictionary for quick lookup of painted tiles by position
 		Dictionary<Vector2I, PaintedTile> paintedTilePositions = new();
@@ -1330,7 +1386,9 @@ public partial class BuildingManager : Node
 			{
 				// Not a painted tile, check if it's reachable
 				Rect2I destinationArea = new Rect2I(gridPos, Vector2I.One);
-				contextTile.IsReachable = gridManager.IsBuildingMovable(robot, robotArea, destinationArea);
+				contextTile.IsReachable = gridManager.IsTileWithinMapBounds(gridPos) &&
+					(!knownTiles.Contains(gridPos) ||
+					gridManager.IsBuildingMovable(robot, robotArea, destinationArea));
 			}
 			
 			contextTiles.Add(contextTile);
@@ -2488,6 +2546,7 @@ public partial class BuildingManager : Node
 			robot.QueueFree();
 		}
 		AliveRobots.Clear();
+		SharedDiscoveredNavigationTiles.Clear();
 		selectedBuildingComponent = null;
 	}
 	

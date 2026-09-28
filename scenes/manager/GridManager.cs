@@ -95,6 +95,7 @@ public partial class GridManager : Node
 	public Vector2I monolithPosition = new();
 
 	private List<Vector2I> allTilesBaseLayer;
+	private Rect2I navigationMapBounds;
 
 	[Export]
 	private TileMapLayer highlightTilemapLayer;
@@ -137,6 +138,7 @@ public partial class GridManager : Node
 		allTilemapLayers = GetAllTilemapLayers(baseTerrainTilemapLayer);
 		allTilesBuildableOnTheMap = GetAllBuildableBaseTerrainTiles(baseTerrainTilemapLayer).ToHashSet();
 		allTilesBaseLayer = baseTerrainTilemapLayer.GetUsedCells().ToList();
+		navigationMapBounds = baseTerrainTilemapLayer.GetUsedRect();
 		MapTileMapLayersToElevationLayers();
 	}
 
@@ -418,6 +420,59 @@ public partial class GridManager : Node
 	public bool IsTileOccupied(Vector2I tilePosition)
 	{
 		return occupiedTiles.Contains(tilePosition);
+	}
+
+	public bool IsTileWithinMapBounds(Vector2I tilePosition)
+	{
+		return navigationMapBounds.HasPoint(tilePosition);
+	}
+
+	public bool IsKnownDestinationOnDifferentElevation(
+		BuildingComponent buildingComponent,
+		Vector2I startPosition,
+		Vector2I targetPosition,
+		IReadOnlySet<Vector2I> knownTiles)
+	{
+		if (buildingComponent.BuildingResource.IsAerial || !knownTiles.Contains(targetPosition))
+		{
+			return false;
+		}
+
+		var (startElevation, _) = GetElevationLayerForTile(startPosition);
+		var (targetElevation, _) = GetElevationLayerForTile(targetPosition);
+		return startElevation != targetElevation;
+	}
+
+	/// <summary>
+	/// Navigation may inspect real terrain only when both ends of a hypothetical
+	/// step have been observed by the robot. Unknown in-bounds terrain is treated
+	/// optimistically and will be validated after the robot gets close enough to
+	/// see it.
+	/// </summary>
+	public bool IsNavigationStepTraversable(
+		BuildingComponent buildingComponent,
+		Rect2I originArea,
+		Rect2I destinationArea,
+		IReadOnlySet<Vector2I> knownTiles,
+		bool considerBridge = false,
+		bool? bridgeElevationIsElevated = null,
+		bool allowUnknownTiles = true)
+	{
+		var originTiles = originArea.ToTiles();
+		var destinationTiles = destinationArea.ToTiles();
+		if (destinationTiles.Count == 0 || destinationTiles.Any(tile => !IsTileWithinMapBounds(tile)))
+		{
+			return false;
+		}
+
+		bool stepIsKnown = originTiles.All(knownTiles.Contains) &&
+			destinationTiles.All(knownTiles.Contains);
+		return (allowUnknownTiles && !stepIsKnown) || (stepIsKnown && IsBuildingMovable(
+			buildingComponent,
+			originArea,
+			destinationArea,
+			considerBridge,
+			bridgeElevationIsElevated));
 	}
 
 	public bool IsBuildingMovable(BuildingComponent buildingComponent, Rect2I originArea, Rect2I destinationArea, bool considerBridge = false, bool? bridgeElevationIsElevated = null)
