@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 namespace Game.UI.Tutorial;
@@ -64,6 +65,16 @@ public enum TutorialCalloutPlacement
 	TopLeft,
 	TopRight,
 	FullScreen,
+}
+
+/// <summary>Places a slide's image gallery relative to its text.</summary>
+public enum TutorialImagePlacement
+{
+	Top,
+	Bottom,
+	Left,
+	Right,
+	Center,
 }
 
 public sealed class TutorialEventContext
@@ -208,7 +219,14 @@ public sealed class TutorialStep
 	public bool Skippable { get; }
 	public bool DimBackground { get; }
 	public TutorialCalloutPlacement CalloutPlacement { get; }
-	public string ImagePath { get; }
+	public IReadOnlyList<string> ImagePaths { get; }
+	public TutorialImagePlacement ImagePlacement { get; }
+	public int ImageGap { get; }
+	public float ImageWidthPercent { get; }
+	public float BodyFontScale { get; }
+	public bool BodyBold { get; }
+	public string Footnote { get; }
+	public string ImagePath => ImagePaths.Count > 0 ? ImagePaths[0] : null;
 
 	internal TutorialStep(
 		string id,
@@ -222,7 +240,13 @@ public sealed class TutorialStep
 		bool skippable,
 		bool dimBackground,
 		TutorialCalloutPlacement calloutPlacement,
-		string imagePath)
+		IReadOnlyList<string> imagePaths,
+		TutorialImagePlacement imagePlacement,
+		int imageGap,
+		float imageWidthPercent,
+		float bodyFontScale,
+		bool bodyBold,
+		string footnote)
 	{
 		Id = id;
 		Title = title;
@@ -235,7 +259,13 @@ public sealed class TutorialStep
 		Skippable = skippable;
 		DimBackground = dimBackground;
 		CalloutPlacement = calloutPlacement;
-		ImagePath = imagePath;
+		ImagePaths = imagePaths ?? Array.Empty<string>();
+		ImagePlacement = imagePlacement;
+		ImageGap = imageGap;
+		ImageWidthPercent = imageWidthPercent;
+		BodyFontScale = bodyFontScale;
+		BodyBold = bodyBold;
+		Footnote = footnote ?? string.Empty;
 	}
 }
 
@@ -251,6 +281,7 @@ public static class TutorialTargetIds
 	public const string DroneDeployButton = "game-ui.deploy.drone";
 	public const string PreplacedBase = "world.preplaced-base";
 	public const string DeployedRover = "world.deployed-rover";
+	public const string DeployedDrone = "world.deployed-drone";
 	public const string ManualMovementDestination = "world.level1.manual-destination";
 	public const string ReturnDestination = "world.level1.return-destination";
 	public const string DeployedRoverBattery = "game-ui.unit.rover.battery";

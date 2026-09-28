@@ -61,6 +61,7 @@ public partial class BaseLevel : Node
 	private TutorialTargetRegistration manualDestinationTutorialTarget;
 	private TutorialTargetRegistration returnDestinationTutorialTarget;
 	private TutorialTargetRegistration deployedRoverTutorialTarget;
+	private TutorialTargetRegistration deployedDroneTutorialTarget;
 	private TutorialTargetRegistration monolithFragmentTutorialTarget;
 	private Vector2I level1ManualDestination;
 	private Vector2I level1ReturnDestination;
@@ -81,6 +82,10 @@ public partial class BaseLevel : Node
 		buildingManager.SetStartingMaterialCount(levelDefinitionResource.StartingMaterialCount);
 		buildingManager.SetRoverCanGetStuck(levelDefinitionResource.RoverCanGetStuck);
 		gameUI.SetTimeToCompleteLevel(levelDefinitionResource.LevelDuration);
+		if (levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
+		{
+			gameUI.SetMissionTimerRunsWhilePaused(true);
+		}
 		//gameUI.TimeIsUp += ShowLevelFailed;
 		buildingManager.BasePlaced += OnBasePlaced;
 		buildingManager.ClockIsTicking += OnClockisTicking;
@@ -170,6 +175,10 @@ public partial class BaseLevel : Node
 			RegisterPreplacedBaseTutorialTarget();
 			if (levelDefinitionResource.Id == TutorialCatalog.Level1Id) RegisterLevel1MovementTargets();
 		}
+		if (levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
+		{
+			RegisterPresentationRobotTargets();
+		}
 		if (levelDefinitionResource.Id == TutorialCatalog.Level3Id)
 		{
 			monolithFragmentTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
@@ -207,6 +216,20 @@ public partial class BaseLevel : Node
 			TutorialTargetIds.ReturnDestination,
 			this,
 			() => GetWorldCellScreenRect(level1ReturnDestination));
+	}
+
+	private void RegisterPresentationRobotTargets()
+	{
+		deployedRoverTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
+			TutorialTargetIds.DeployedRover,
+			this,
+			() => GetBuildingScreenRect(BuildingComponent.GetValidBuildingComponents(this)
+				.FirstOrDefault(building => building.BuildingResource?.DisplayName == "Rover")));
+		deployedDroneTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
+			TutorialTargetIds.DeployedDrone,
+			this,
+			() => GetBuildingScreenRect(BuildingComponent.GetValidBuildingComponents(this)
+				.FirstOrDefault(building => building.BuildingResource?.DisplayName == "Drone")));
 	}
 
 	private Rect2? GetWorldCellScreenRect(Vector2I cell)
@@ -269,6 +292,8 @@ public partial class BaseLevel : Node
 		returnDestinationTutorialTarget = null;
 		deployedRoverTutorialTarget?.Dispose();
 		deployedRoverTutorialTarget = null;
+		deployedDroneTutorialTarget?.Dispose();
+		deployedDroneTutorialTarget = null;
 		monolithFragmentTutorialTarget?.Dispose();
 		monolithFragmentTutorialTarget = null;
 		if (GodotObject.IsInstanceValid(gameUI))
@@ -338,6 +363,11 @@ public partial class BaseLevel : Node
 	{
 		baseBuilding = BuildingComponent.GetValidBuildingComponents(this)
 			.First((buildingComponent) => buildingComponent.BuildingResource.IsBase);
+		if (levelDefinitionResource?.Id == TutorialCatalog.Level7PresentationId &&
+			GodotObject.IsInstanceValid(tutorialTargetRegistry))
+		{
+			RegisterPreplacedBaseTutorialTarget();
+		}
 	}
 
 	public Rect2I GetLevelTileBounds()
@@ -422,8 +452,7 @@ public partial class BaseLevel : Node
 		AddChild(selectedRobotUI);
 		//selectedRobotUI.selectedBuildingComponent = buildingComponent;
 		selectedRobotUI.SetupUI(buildingComponent, gravitationalAnomalyMap); // Call setup after adding to tree
-		if (GodotObject.IsInstanceValid(tutorialTargetRegistry) &&
-			buildingComponent.BuildingResource?.DisplayName == "Rover")
+		if (GodotObject.IsInstanceValid(tutorialTargetRegistry))
 		{
 			selectedRobotUI.RegisterTutorialTargets(tutorialTargetRegistry);
 		}

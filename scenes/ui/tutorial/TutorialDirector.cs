@@ -38,6 +38,8 @@ public partial class TutorialDirector : Node
 	private bool ownsPause;
 	private bool previousPauseState;
 	private bool presentationMode;
+	private bool presentationReviewMode;
+	private int presentationFrontierIndex = -1;
 
 	public bool IsRunning => running;
 	public string CurrentStepId => currentStep?.Id;
@@ -76,6 +78,8 @@ public partial class TutorialDirector : Node
 		overlay.ConfigurePresentationMode(presentationMode);
 		completedStepIds.Clear();
 		nextStepIndex = 0;
+		presentationReviewMode = false;
+		presentationFrontierIndex = -1;
 		running = true;
 		eventBridge.EventPublished += OnEventPublished;
 		overlay.ContinueRequested += OnContinueRequested;
@@ -99,7 +103,8 @@ public partial class TutorialDirector : Node
 		if (currentOverlayDismissed)
 		{
 			MaintainDismissedTargetSubscription();
-			if (currentStep.Completion.Kind == TutorialCompletionKind.State &&
+			if (!presentationReviewMode &&
+				currentStep.Completion.Kind == TutorialCompletionKind.State &&
 				currentStep.Completion.StatePredicate?.Invoke() == true)
 				CompleteCurrentStep();
 			return;
@@ -135,7 +140,8 @@ public partial class TutorialDirector : Node
 			}
 		}
 
-		if (currentStep.Completion.Kind == TutorialCompletionKind.State &&
+		if (!presentationReviewMode &&
+			currentStep.Completion.Kind == TutorialCompletionKind.State &&
 			currentStep.Completion.StatePredicate?.Invoke() == true)
 		{
 			CompleteCurrentStep();
@@ -169,6 +175,11 @@ public partial class TutorialDirector : Node
 		waitingForTrigger = false;
 		currentStep = candidate;
 		nextStepIndex++;
+		if (presentationMode)
+		{
+			presentationReviewMode = false;
+			presentationFrontierIndex = Math.Max(presentationFrontierIndex, nextStepIndex - 1);
+		}
 		PresentCurrentStep();
 	}
 
@@ -212,7 +223,13 @@ public partial class TutorialDirector : Node
 				showQuitTutorial: currentStep.Skippable,
 				dimBackground: currentStep.DimBackground,
 				calloutPlacement: GetMissingTargetPlacement(),
-				imagePath: currentStep.ImagePath,
+				imagePaths: currentStep.ImagePaths,
+				imagePlacement: currentStep.ImagePlacement,
+				imageGap: currentStep.ImageGap,
+				imageWidthPercent: currentStep.ImageWidthPercent,
+				bodyFontScale: currentStep.BodyFontScale,
+				bodyBold: currentStep.BodyBold,
+				footnote: currentStep.Footnote,
 				showPrevious: presentationMode && nextStepIndex > 1,
 				progressText: GetProgressText());
 		}
@@ -251,7 +268,13 @@ public partial class TutorialDirector : Node
 			showQuitTutorial: currentStep.Skippable,
 			dimBackground: currentStep.DimBackground,
 			calloutPlacement: GetMissingTargetPlacement(),
-			imagePath: currentStep.ImagePath,
+			imagePaths: currentStep.ImagePaths,
+			imagePlacement: currentStep.ImagePlacement,
+			imageGap: currentStep.ImageGap,
+			imageWidthPercent: currentStep.ImageWidthPercent,
+			bodyFontScale: currentStep.BodyFontScale,
+			bodyBold: currentStep.BodyBold,
+			footnote: currentStep.Footnote,
 			showPrevious: presentationMode && nextStepIndex > 1,
 			progressText: GetProgressText());
 		EmitSignal(SignalName.TargetFallbackUsed, currentStep.Id, currentStep.TargetId);
@@ -264,11 +287,17 @@ public partial class TutorialDirector : Node
 			currentStep.Text,
 			targetRect,
 			mode,
-			showContinue: currentStep.Completion.AllowsContinue,
+			showContinue: presentationReviewMode || currentStep.Completion.AllowsContinue,
 			showQuitTutorial: currentStep.Skippable,
 			dimBackground: currentStep.DimBackground,
 			calloutPlacement: currentStep.CalloutPlacement,
-			imagePath: currentStep.ImagePath,
+			imagePaths: currentStep.ImagePaths,
+			imagePlacement: currentStep.ImagePlacement,
+			imageGap: currentStep.ImageGap,
+			imageWidthPercent: currentStep.ImageWidthPercent,
+			bodyFontScale: currentStep.BodyFontScale,
+			bodyBold: currentStep.BodyBold,
+			footnote: currentStep.Footnote,
 			showPrevious: presentationMode && nextStepIndex > 1,
 			progressText: GetProgressText());
 	}
@@ -280,7 +309,7 @@ public partial class TutorialDirector : Node
 
 	private void CheckAlreadySatisfiedCompletion()
 	{
-		if (currentStep == null)
+		if (currentStep == null || presentationReviewMode)
 		{
 			return;
 		}
@@ -303,7 +332,7 @@ public partial class TutorialDirector : Node
 			return;
 		}
 
-		if (currentStep != null && currentStep.Completion.Matches(context))
+		if (!presentationReviewMode && currentStep != null && currentStep.Completion.Matches(context))
 		{
 			CompleteCurrentStep();
 			return;
@@ -322,6 +351,11 @@ public partial class TutorialDirector : Node
 		{
 			return;
 		}
+		if (presentationReviewMode)
+		{
+			ShowNextReviewedStep();
+			return;
+		}
 		if (currentStep.Completion.AllowsContinue || targetFallbackActive)
 		{
 			CompleteCurrentStep();
@@ -335,22 +369,35 @@ public partial class TutorialDirector : Node
 			return;
 		}
 
-		int previousIndex = nextStepIndex - 2;
+		int previousIndex = (nextStepIndex - 1) - 1;
 		if (previousIndex < 0)
 		{
 			return;
 		}
 
+		ShowReviewedStep(previousIndex);
+	}
+
+	private void ShowNextReviewedStep()
+	{
+		int nextReviewIndex = nextStepIndex;
+		if (nextReviewIndex > presentationFrontierIndex || nextReviewIndex >= steps.Count)
+		{
+			return;
+		}
+
+		ShowReviewedStep(nextReviewIndex);
+	}
+
+	private void ShowReviewedStep(int stepIndex)
+	{
 		DetachTargetButton();
 		overlay.HideStep();
 		RestorePausePolicy();
-		completedStepIds.Remove(steps[previousIndex].Id);
-		currentStep = null;
-		waitingForTarget = false;
-		targetFallbackActive = false;
-		currentOverlayDismissed = false;
-		nextStepIndex = previousIndex;
-		TryActivateNextStep();
+		currentStep = steps[stepIndex];
+		nextStepIndex = stepIndex + 1;
+		presentationReviewMode = stepIndex < presentationFrontierIndex;
+		PresentCurrentStep();
 	}
 
 	private void OnCloseWindowRequested()
@@ -380,7 +427,8 @@ public partial class TutorialDirector : Node
 
 	private void OnTargetPressed()
 	{
-		if (currentStep?.Completion.Kind == TutorialCompletionKind.TargetPressed)
+		if (!presentationReviewMode &&
+			currentStep?.Completion.Kind == TutorialCompletionKind.TargetPressed)
 		{
 			CompleteCurrentStep();
 		}
@@ -483,6 +531,8 @@ public partial class TutorialDirector : Node
 
 		running = false;
 		presentationMode = false;
+		presentationReviewMode = false;
+		presentationFrontierIndex = -1;
 		waitingForTrigger = false;
 		waitingForTarget = false;
 		targetFallbackActive = false;

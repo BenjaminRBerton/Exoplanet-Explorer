@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Game.Autoload;
 using Godot;
 
@@ -44,7 +45,12 @@ public partial class TutorialOverlay : CanvasLayer
 	private Panel calloutAttentionBorder;
 	private Label titleLabel;
 	private Label bodyLabel;
-	private TextureRect slideImage;
+	private Label footnoteLabel;
+	private VBoxContainer slideStage;
+	private BoxContainer slideLayout;
+	private GridContainer slideImages;
+	private Control slideTopSpacer;
+	private Control slideBottomSpacer;
 	private Button continueButton;
 	private Button previousButton;
 	private Button closeWindowButton;
@@ -54,6 +60,8 @@ public partial class TutorialOverlay : CanvasLayer
 
 	private Rect2? requestedFocusRect;
 	private TutorialCalloutPlacement requestedCalloutPlacement;
+	private TutorialImagePlacement requestedImagePlacement;
+	private float requestedImageWidthPercent = 40f;
 	private Rect2 visibleFocusRect;
 	private bool stepVisible;
 	private double pulseTime;
@@ -75,7 +83,12 @@ public partial class TutorialOverlay : CanvasLayer
 		calloutAttentionBorder = GetNode<Panel>("%CalloutAttentionBorder");
 		titleLabel = GetNode<Label>("%TitleLabel");
 		bodyLabel = GetNode<Label>("%BodyLabel");
-		slideImage = GetNode<TextureRect>("%SlideImage");
+		footnoteLabel = GetNode<Label>("%FootnoteLabel");
+		slideStage = GetNode<VBoxContainer>("%SlideStage");
+		slideLayout = GetNode<BoxContainer>("%SlideLayout");
+		slideImages = GetNode<GridContainer>("%SlideImages");
+		slideTopSpacer = GetNode<Control>("%SlideTopSpacer");
+		slideBottomSpacer = GetNode<Control>("%SlideBottomSpacer");
 		continueButton = GetNode<Button>("%ContinueButton");
 		previousButton = GetNode<Button>("%PreviousButton");
 		closeWindowButton = GetNode<Button>("%CloseWindowButton");
@@ -161,19 +174,36 @@ public partial class TutorialOverlay : CanvasLayer
 		bool showQuitTutorial = true,
 		bool dimBackground = true,
 		TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto,
-		string imagePath = null,
+		IReadOnlyList<string> imagePaths = null,
+		TutorialImagePlacement imagePlacement = TutorialImagePlacement.Bottom,
+		int imageGap = 16,
+		float imageWidthPercent = 40f,
+		float bodyFontScale = 1f,
+		bool bodyBold = false,
+		string footnote = null,
 		bool showPrevious = false,
 		string progressText = null)
 	{
 		titleLabel.Text = title ?? string.Empty;
 		bodyLabel.Text = message ?? string.Empty;
+		footnoteLabel.Text = footnote ?? string.Empty;
+		footnoteLabel.Visible = !string.IsNullOrWhiteSpace(footnote);
 		requestedFocusRect = targetScreenRect;
 		requestedCalloutPlacement = calloutPlacement;
 		if (presentationMode)
 		{
 			bool fullScreenSlide = calloutPlacement == TutorialCalloutPlacement.FullScreen;
-			titleLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 42 : 34);
-			bodyLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 26 : 23);
+			float resolvedBodyScale = Mathf.Clamp(bodyFontScale, 0.75f, 2f);
+			titleLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 42 : 28);
+			bodyLabel.AddThemeFontSizeOverride(
+				"font_size",
+				Mathf.RoundToInt((fullScreenSlide ? 26f : 20f) * resolvedBodyScale));
+			ApplyPresentationFont(
+				bodyLabel,
+				CreatePresentationFont(
+					new[] { "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" },
+					bodyBold ? 700 : 400));
+			footnoteLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 14 : 12);
 		}
 		continueButton.Visible = showContinue;
 		previousButton.Visible = presentationMode && showPrevious;
@@ -183,7 +213,7 @@ public partial class TutorialOverlay : CanvasLayer
 		// Hiding the tutorial-only close action avoids accidentally advancing a slide.
 		closeWindowButton.Visible = !presentationMode;
 		quitTutorialButton.Visible = showQuitTutorial;
-		SetSlideImage(imagePath);
+		SetSlideImages(imagePaths, imagePlacement, imageGap, imageWidthPercent);
 
 		// A guided step with no resolved target is the safe text-only fallback: the dimmer remains
 		// visible, but input passes through so a missing registration cannot trap the player.
@@ -211,34 +241,144 @@ public partial class TutorialOverlay : CanvasLayer
 	public void ConfigurePresentationMode(bool enabled)
 	{
 		presentationMode = enabled;
-		Font presentationFont = enabled
-			? GD.Load<Font>("res://resources/Inter-VariableFont_opsz,wght.ttf")
-			: null;
-
-		ApplyPresentationFont(titleLabel, presentationFont);
-		ApplyPresentationFont(bodyLabel, presentationFont);
-		ApplyPresentationFont(continueButton, presentationFont);
-		ApplyPresentationFont(previousButton, presentationFont);
-		ApplyPresentationFont(closeWindowButton, presentationFont);
-		ApplyPresentationFont(quitTutorialButton, presentationFont);
-		ApplyPresentationFont(slideProgressLabel, presentationFont);
 
 		if (enabled)
 		{
+			slideTopSpacer.Visible = true;
+			slideBottomSpacer.Visible = true;
+			SystemFont bodyFont = CreatePresentationFont(
+				new[] { "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" }, 400);
+			SystemFont headingFont = CreatePresentationFont(
+				new[] { "OCR A", "OCR-A", "OCR B", "IBM Plex Mono", "monospace" }, 700);
+
+			ApplyPresentationFont(titleLabel, headingFont);
+			ApplyPresentationFont(bodyLabel, bodyFont);
+			ApplyPresentationFont(footnoteLabel, bodyFont);
+			ApplyPresentationFont(continueButton, bodyFont);
+			ApplyPresentationFont(previousButton, bodyFont);
+			ApplyPresentationFont(closeWindowButton, bodyFont);
+			ApplyPresentationFont(quitTutorialButton, bodyFont);
+			ApplyPresentationFont(slideProgressLabel, bodyFont);
+			ApplyPresentationColors();
+
 			titleLabel.AddThemeFontSizeOverride("font_size", 34);
 			bodyLabel.AddThemeFontSizeOverride("font_size", 23);
+			titleLabel.AddThemeConstantOverride("line_spacing", 4);
+			bodyLabel.AddThemeConstantOverride("line_spacing", 4);
 			continueButton.Text = "NEXT";
 			quitTutorialButton.Text = "EXIT PRESENTATION";
 			closeWindowButton.Text = "HIDE SLIDE  X";
 		}
 		else
 		{
+			slideTopSpacer.Visible = false;
+			slideBottomSpacer.Visible = false;
+			ApplyPresentationFont(titleLabel, null);
+			ApplyPresentationFont(bodyLabel, null);
+			ApplyPresentationFont(footnoteLabel, null);
+			ApplyPresentationFont(continueButton, null);
+			ApplyPresentationFont(previousButton, null);
+			ApplyPresentationFont(closeWindowButton, null);
+			ApplyPresentationFont(quitTutorialButton, null);
+			ApplyPresentationFont(slideProgressLabel, null);
+			RemovePresentationColors();
+
 			titleLabel.AddThemeFontSizeOverride("font_size", 28);
 			bodyLabel.AddThemeFontSizeOverride("font_size", 19);
+			titleLabel.RemoveThemeConstantOverride("line_spacing");
+			bodyLabel.RemoveThemeConstantOverride("line_spacing");
 			continueButton.Text = "CONTINUE";
 			quitTutorialButton.Text = "QUIT TUTORIAL";
 			closeWindowButton.Text = "CLOSE WINDOW  X";
 		}
+	}
+
+	private static SystemFont CreatePresentationFont(string[] familyNames, int weight)
+	{
+		return new SystemFont
+		{
+			FontNames = familyNames,
+			FontWeight = weight,
+		};
+	}
+
+	private void ApplyPresentationColors()
+	{
+		callout.AddThemeStyleboxOverride("panel", CreatePresentationPanelStyle());
+		titleLabel.AddThemeColorOverride("font_color", Colors.Black);
+		bodyLabel.AddThemeColorOverride("font_color", Colors.Black);
+		footnoteLabel.AddThemeColorOverride("font_color", new Color(0.32f, 0.32f, 0.32f));
+		slideProgressLabel.AddThemeColorOverride("font_color", Colors.Black);
+
+		ApplyPresentationButtonStyle(continueButton, false);
+		ApplyPresentationButtonStyle(previousButton, false);
+		ApplyPresentationButtonStyle(closeWindowButton, false);
+		ApplyPresentationButtonStyle(quitTutorialButton, true);
+	}
+
+	private void RemovePresentationColors()
+	{
+		callout.RemoveThemeStyleboxOverride("panel");
+		titleLabel.RemoveThemeColorOverride("font_color");
+		bodyLabel.RemoveThemeColorOverride("font_color");
+		footnoteLabel.RemoveThemeColorOverride("font_color");
+		slideProgressLabel.RemoveThemeColorOverride("font_color");
+
+		RemovePresentationButtonStyle(continueButton);
+		RemovePresentationButtonStyle(previousButton);
+		RemovePresentationButtonStyle(closeWindowButton);
+		RemovePresentationButtonStyle(quitTutorialButton);
+	}
+
+	private static StyleBoxFlat CreatePresentationPanelStyle()
+	{
+		return new StyleBoxFlat
+		{
+			BgColor = Colors.White,
+			BorderWidthLeft = 2,
+			BorderWidthTop = 2,
+			BorderWidthRight = 2,
+			BorderWidthBottom = 2,
+			BorderColor = Colors.Black,
+		};
+	}
+
+	private static void ApplyPresentationButtonStyle(Button button, bool destructive)
+	{
+		Color textColor = destructive ? new Color(0.55f, 0.05f, 0.05f) : Colors.Black;
+		button.AddThemeColorOverride("font_color", textColor);
+		button.AddThemeColorOverride("font_hover_color", Colors.Black);
+		button.AddThemeColorOverride("font_pressed_color", Colors.White);
+		button.AddThemeColorOverride("font_focus_color", Colors.Black);
+		button.AddThemeStyleboxOverride("normal", CreatePresentationButtonBox(Colors.White));
+		button.AddThemeStyleboxOverride("hover", CreatePresentationButtonBox(new Color(0.92f, 0.92f, 0.92f)));
+		button.AddThemeStyleboxOverride("pressed", CreatePresentationButtonBox(Colors.Black));
+		button.AddThemeStyleboxOverride("focus", CreatePresentationButtonBox(Colors.White, 3));
+	}
+
+	private static StyleBoxFlat CreatePresentationButtonBox(Color background, int borderWidth = 1)
+	{
+		return new StyleBoxFlat
+		{
+			BgColor = background,
+			BorderWidthLeft = borderWidth,
+			BorderWidthTop = borderWidth,
+			BorderWidthRight = borderWidth,
+			BorderWidthBottom = borderWidth,
+			BorderColor = Colors.Black,
+		};
+	}
+
+	private static void RemovePresentationButtonStyle(Button button)
+	{
+		button.RemoveThemeColorOverride("font_color");
+		button.RemoveThemeColorOverride("font_hover_color");
+		button.RemoveThemeColorOverride("font_pressed_color");
+		button.RemoveThemeColorOverride("font_focus_color");
+		button.RemoveThemeStyleboxOverride("normal");
+		button.RemoveThemeStyleboxOverride("hover");
+		button.RemoveThemeStyleboxOverride("pressed");
+		button.RemoveThemeStyleboxOverride("focus");
 	}
 
 	private static void ApplyPresentationFont(Control control, Font font)
@@ -251,23 +391,105 @@ public partial class TutorialOverlay : CanvasLayer
 		control.AddThemeFontOverride("font", font);
 	}
 
-	private void SetSlideImage(string imagePath)
+	private void SetSlideImages(
+		IReadOnlyList<string> imagePaths,
+		TutorialImagePlacement placement,
+		int gap,
+		float widthPercent)
 	{
-		slideImage.Texture = null;
-		slideImage.Visible = false;
-		if (string.IsNullOrWhiteSpace(imagePath))
+		requestedImagePlacement = placement;
+		requestedImageWidthPercent = Mathf.Clamp(widthPercent, 5f, 95f);
+		ClearSlideImages();
+		List<Texture2D> textures = new();
+		if (imagePaths != null)
 		{
-			return;
+			foreach (string imagePath in imagePaths)
+			{
+				if (string.IsNullOrWhiteSpace(imagePath)) continue;
+				if (!ResourceLoader.Exists(imagePath))
+				{
+					GD.PushWarning($"Tutorial slide image does not exist: '{imagePath}'.");
+					continue;
+				}
+
+				Texture2D texture = GD.Load<Texture2D>(imagePath);
+				if (texture != null) textures.Add(texture);
+			}
 		}
 
-		if (!ResourceLoader.Exists(imagePath))
+		RebuildSlideLayout(
+			placement,
+			textures.Count,
+			Mathf.Max(0, gap),
+			requestedImageWidthPercent);
+		bool sidePlacement = placement is TutorialImagePlacement.Left or TutorialImagePlacement.Right;
+		foreach (Texture2D texture in textures)
 		{
-			GD.PushWarning($"Tutorial slide image does not exist: '{imagePath}'.");
-			return;
+			TextureRect image = new()
+			{
+				Texture = texture,
+				CustomMinimumSize = sidePlacement ? new Vector2(340f, 440f) : new Vector2(220f, 260f),
+				ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+				StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+				TextureFilter = CanvasItem.TextureFilterEnum.Linear,
+			};
+			slideImages.AddChild(image);
+		}
+		slideImages.Visible = textures.Count > 0;
+	}
+
+	private void RebuildSlideLayout(
+		TutorialImagePlacement placement,
+		int imageCount,
+		int gap,
+		float widthPercent)
+	{
+		bool horizontal = placement is TutorialImagePlacement.Left or TutorialImagePlacement.Right;
+		BoxContainer replacement = horizontal ? new HBoxContainer() : new VBoxContainer();
+		replacement.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		replacement.Alignment = BoxContainer.AlignmentMode.Center;
+		replacement.AddThemeConstantOverride("separation", gap);
+		slideStage.AddChild(replacement);
+		slideStage.MoveChild(replacement, slideBottomSpacer.GetIndex());
+
+		bool imagesFirst = placement is TutorialImagePlacement.Top or TutorialImagePlacement.Left;
+		if (imagesFirst)
+		{
+			slideImages.Reparent(replacement);
+			bodyLabel.Reparent(replacement);
+		}
+		else
+		{
+			bodyLabel.Reparent(replacement);
+			slideImages.Reparent(replacement);
 		}
 
-		slideImage.Texture = GD.Load<Texture2D>(imagePath);
-		slideImage.Visible = slideImage.Texture != null;
+		slideLayout.QueueFree();
+		slideLayout = replacement;
+		bodyLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		bodyLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+		bodyLabel.SizeFlagsStretchRatio = horizontal ? 100f - widthPercent : 1f;
+		slideImages.SizeFlagsHorizontal = placement == TutorialImagePlacement.Center
+			? Control.SizeFlags.ShrinkCenter
+			: Control.SizeFlags.ExpandFill;
+		slideImages.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+		slideImages.SizeFlagsStretchRatio = horizontal ? widthPercent : 1f;
+		slideImages.Columns = horizontal ? 1 : Mathf.Max(1, imageCount);
+		slideImages.AddThemeConstantOverride("h_separation", gap);
+		slideImages.AddThemeConstantOverride("v_separation", gap);
+	}
+
+	private void ClearSlideImages()
+	{
+		if (slideImages == null) return;
+		foreach (Node child in slideImages.GetChildren())
+		{
+			slideImages.RemoveChild(child);
+			child.QueueFree();
+		}
+		slideImages.Visible = false;
 	}
 
 	public void SetFocusRect(Rect2? targetScreenRect)
@@ -294,11 +516,7 @@ public partial class TutorialOverlay : CanvasLayer
 		{
 			overlayRoot.Visible = false;
 		}
-		if (slideImage != null)
-		{
-			slideImage.Texture = null;
-			slideImage.Visible = false;
-		}
+		ClearSlideImages();
 		tutorialCursor?.SetPopupCursorOverride(false);
 	}
 
@@ -324,7 +542,24 @@ public partial class TutorialOverlay : CanvasLayer
 		}
 
 		LayoutCallout(viewportSize, hasFocus);
+		ApplyImageWidth();
 		LayoutArrow(hasFocus);
+	}
+
+	private void ApplyImageWidth()
+	{
+		if (slideImages == null || !slideImages.Visible) return;
+		bool sidePlacement = requestedImagePlacement is
+			TutorialImagePlacement.Left or TutorialImagePlacement.Right;
+		if (sidePlacement)
+		{
+			slideImages.CustomMinimumSize = new Vector2(0f, 440f);
+			return;
+		}
+
+		float availableWidth = Mathf.Max(220f, callout.Size.X - 48f);
+		float galleryWidth = availableWidth * requestedImageWidthPercent / 100f;
+		slideImages.CustomMinimumSize = new Vector2(galleryWidth, 260f);
 	}
 
 	private Rect2 CalculateVisibleFocusRect(Vector2 viewportSize)
@@ -378,8 +613,8 @@ public partial class TutorialOverlay : CanvasLayer
 		}
 
 		Vector2 minimumSize = callout.GetCombinedMinimumSize();
-		minimumSize.X = Mathf.Max(minimumSize.X, presentationMode ? 820f : 460f);
-		minimumSize.Y = Mathf.Max(minimumSize.Y, presentationMode ? 400f : 190f);
+		minimumSize.X = Mathf.Max(minimumSize.X, presentationMode ? 680f : 460f);
+		minimumSize.Y = Mathf.Max(minimumSize.Y, presentationMode ? 280f : 190f);
 		minimumSize.X = Mathf.Min(minimumSize.X, Mathf.Max(240f, viewportSize.X - (ViewportMargin * 2f)));
 		minimumSize.Y = Mathf.Min(minimumSize.Y, Mathf.Max(160f, viewportSize.Y - (ViewportMargin * 2f)));
 		callout.Size = minimumSize;

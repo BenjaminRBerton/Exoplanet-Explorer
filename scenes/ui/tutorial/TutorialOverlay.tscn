@@ -164,23 +164,53 @@ theme_override_font_sizes/font_size = 16
 text = "CLOSE WINDOW  X"
 flat = true
 
-[node name="BodyLabel" type="Label" parent="OverlayRoot/Callout/Margin/Content"]
+[node name="SlideStage" type="VBoxContainer" parent="OverlayRoot/Callout/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SlideTopSpacer" type="Control" parent="OverlayRoot/Callout/Margin/Content/SlideStage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SlideLayout" type="VBoxContainer" parent="OverlayRoot/Callout/Margin/Content/SlideStage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="BodyLabel" type="Label" parent="OverlayRoot/Callout/Margin/Content/SlideStage/SlideLayout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(412, 70)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
 text = "Tutorial instruction"
 autowrap_mode = 3
+vertical_alignment = 1
 
-[node name="SlideImage" type="TextureRect" parent="OverlayRoot/Callout/Margin/Content"]
+[node name="SlideImages" type="GridContainer" parent="OverlayRoot/Callout/Margin/Content/SlideStage/SlideLayout"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
-texture_filter = 1
-expand_mode = 1
-stretch_mode = 5
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+
+[node name="SlideBottomSpacer" type="Control" parent="OverlayRoot/Callout/Margin/Content/SlideStage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FootnoteLabel" type="Label" parent="OverlayRoot/Callout/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
 
 [node name="Actions" type="HBoxContainer" parent="OverlayRoot/Callout/Margin/Content"]
 layout_mode = 2
