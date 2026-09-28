@@ -85,7 +85,13 @@ public sealed class TutorialStepBuilder
 	private bool skippable = true;
 	private bool dimBackground = true;
 	private TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto;
-	private string imagePath;
+	private readonly List<string> imagePaths = new();
+	private TutorialImagePlacement imagePlacement = TutorialImagePlacement.Bottom;
+	private int imageGap = 16;
+	private float imageWidthPercent = 40f;
+	private float bodyFontScale = 1f;
+	private bool bodyBold;
+	private string footnote = string.Empty;
 
 	internal TutorialStepBuilder(string id, string defaultPreviousStepId)
 	{
@@ -156,10 +162,84 @@ public sealed class TutorialStepBuilder
 		return this;
 	}
 
-	/// <summary>Adds a project image below the slide text.</summary>
-	public TutorialStepBuilder WithImage(string resourcePath)
+	/// <summary>Adds one project image at the requested position relative to the slide text.</summary>
+	public TutorialStepBuilder WithImage(
+		string resourcePath,
+		TutorialImagePlacement placement = TutorialImagePlacement.Bottom,
+		int gap = 16,
+		float widthPercent = 40f)
 	{
-		imagePath = resourcePath;
+		imagePaths.Clear();
+		AddImagePath(resourcePath);
+		imagePlacement = placement;
+		imageGap = Math.Max(0, gap);
+		imageWidthPercent = Math.Clamp(widthPercent, 5f, 95f);
+		return this;
+	}
+
+	/// <summary>Adds a centered row of project images below the slide text.</summary>
+	public TutorialStepBuilder WithImages(params string[] resourcePaths)
+	{
+		return WithImages(resourcePaths, TutorialImagePlacement.Bottom, 16, 40f);
+	}
+
+	/// <summary>Adds project images using fluent placement-first arguments.</summary>
+	public TutorialStepBuilder WithImages(
+		TutorialImagePlacement placement,
+		int gap,
+		params string[] resourcePaths)
+	{
+		return WithImages(resourcePaths, placement, gap, 40f);
+	}
+
+	/// <summary>Adds project images with explicit placement, spacing, and gallery width.</summary>
+	public TutorialStepBuilder WithImages(
+		TutorialImagePlacement placement,
+		int gap,
+		float widthPercent,
+		params string[] resourcePaths)
+	{
+		return WithImages(resourcePaths, placement, gap, widthPercent);
+	}
+
+	/// <summary>Adds project images at the requested position and spacing.</summary>
+	public TutorialStepBuilder WithImages(
+		IEnumerable<string> resourcePaths,
+		TutorialImagePlacement placement = TutorialImagePlacement.Bottom,
+		int gap = 16,
+		float widthPercent = 40f)
+	{
+		imagePaths.Clear();
+		if (resourcePaths != null)
+		{
+			foreach (string resourcePath in resourcePaths)
+			{
+				AddImagePath(resourcePath);
+			}
+		}
+		imagePlacement = placement;
+		imageGap = Math.Max(0, gap);
+		imageWidthPercent = Math.Clamp(widthPercent, 5f, 95f);
+		return this;
+	}
+
+	private void AddImagePath(string resourcePath)
+	{
+		if (!string.IsNullOrWhiteSpace(resourcePath)) imagePaths.Add(resourcePath);
+	}
+
+	/// <summary>Emphasizes this step's message without changing the presentation heading.</summary>
+	public TutorialStepBuilder EmphasizeBody(float fontScale = 1.35f, bool bold = true)
+	{
+		bodyFontScale = Math.Clamp(fontScale, 0.75f, 2f);
+		bodyBold = bold;
+		return this;
+	}
+
+	/// <summary>Adds smaller supporting text at the bottom of the slide.</summary>
+	public TutorialStepBuilder WithFootnote(string text)
+	{
+		footnote = text ?? string.Empty;
 		return this;
 	}
 
@@ -226,6 +306,12 @@ public sealed class TutorialStepBuilder
 			skippable,
 			dimBackground,
 			calloutPlacement,
-			imagePath);
+			imagePaths.AsReadOnly(),
+			imagePlacement,
+			imageGap,
+			imageWidthPercent,
+			bodyFontScale,
+			bodyBold,
+			footnote);
 	}
 }

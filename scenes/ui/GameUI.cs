@@ -49,6 +49,7 @@ public partial class GameUI : CanvasLayer
 	public delegate void SendPathToRobotButtonPressedEventHandler();
 	private bool isTimeIsUp = false;
 	private bool isMissionTimerPaused;
+	private Timer pauseIndependentMissionTimer;
 	public int TimeToCompleteLevel;
 
 	private VBoxContainer buildingSectionContainer;
@@ -475,9 +476,35 @@ public partial class GameUI : CanvasLayer
 	public void SetTimeToCompleteLevel(int timeResource)
 	{
 		TimeToCompleteLevel = timeResource;
-		var timeSpan = TimeSpan.FromSeconds(timeResource);
-		timeLeftLabel.Text = timeSpan.ToString(@"mm\:ss");
+		SetTimeLeftLabel(timeResource);
 		isTimeIsUp = false;
+	}
+
+	/// <summary>
+	/// Keeps the visible mission countdown running while the scene tree is paused. Presentation
+	/// slides hard-pause gameplay, so their timer needs a pause-independent clock.
+	/// </summary>
+	public void SetMissionTimerRunsWhilePaused(bool enabled)
+	{
+		if (!enabled)
+		{
+			pauseIndependentMissionTimer?.Stop();
+			return;
+		}
+
+		if (pauseIndependentMissionTimer == null)
+		{
+			pauseIndependentMissionTimer = new Timer
+			{
+				WaitTime = 1d,
+				OneShot = false,
+				ProcessMode = ProcessModeEnum.Always,
+			};
+			pauseIndependentMissionTimer.Timeout += TickMissionTimer;
+			AddChild(pauseIndependentMissionTimer);
+		}
+
+		pauseIndependentMissionTimer.Start();
 	}
 
 	public void SetMissionTimerPaused(bool paused)
@@ -487,35 +514,38 @@ public partial class GameUI : CanvasLayer
 
 	private void OnClockIsTicking()
 	{
+		// The presentation clock replaces gameplay ticks so an unpaused live-demo segment does
+		// not decrement the same timer twice.
+		if (pauseIndependentMissionTimer?.IsStopped() == false)
+		{
+			return;
+		}
+
+		TickMissionTimer();
+	}
+
+	private void TickMissionTimer()
+	{
 		if (isTimeIsUp || isMissionTimerPaused)
 		{
 			return;
 		}
-		var currentTimeLeft = timeLeftLabel.Text;
-		TimeSpan timeLeft;
-		if (!TimeSpan.TryParseExact(currentTimeLeft, @"mm\:ss", null, out timeLeft))
-		{
-			// If parsing fails, reset to 00:00 and end the level
-			timeLeftLabel.Text = "00:00";
-			//isTimeIsUp = true;
-			//EmitSignal(SignalName.TimeIsUp);
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-		timeLeft = timeLeft.Subtract(TimeSpan.FromSeconds(1));
-		if (timeLeft.TotalSeconds <= 0)
-		{
-			//isTimeIsUp = true;
-			timeLeftLabel.Text = "00:00";
-			//EmitSignal(SignalName.TimeIsUp);
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-		else
-		{
-			timeLeftLabel.Text = timeLeft.ToString(@"mm\:ss");
-		}
 
+		TimeToCompleteLevel = Math.Max(0, TimeToCompleteLevel - 1);
+		SetTimeLeftLabel(TimeToCompleteLevel);
+		if (TimeToCompleteLevel == 0)
+		{
+			isTimeIsUp = true;
+			pauseIndependentMissionTimer?.Stop();
+		}
+	}
+
+	private void SetTimeLeftLabel(int secondsRemaining)
+	{
+		int safeSeconds = Math.Max(0, secondsRemaining);
+		int totalMinutes = safeSeconds / 60;
+		int seconds = safeSeconds % 60;
+		timeLeftLabel.Text = $"{totalMinutes:00}:{seconds:00}";
 	}
 
 	public override void _UnhandledInput(InputEvent evt)
