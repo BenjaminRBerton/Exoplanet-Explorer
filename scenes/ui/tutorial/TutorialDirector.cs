@@ -94,6 +94,26 @@ public partial class TutorialDirector : Node
 		StopInternal(hideOverlay: true);
 	}
 
+	public override void _Input(InputEvent inputEvent)
+	{
+		if (!running || !presentationMode || currentStep == null ||
+			inputEvent is not InputEventKey keyEvent || !keyEvent.Pressed || keyEvent.Echo)
+		{
+			return;
+		}
+
+		if (keyEvent.Keycode == Key.Left || keyEvent.PhysicalKeycode == Key.Left)
+		{
+			GetViewport().SetInputAsHandled();
+			OnPreviousRequested();
+		}
+		else if (keyEvent.Keycode == Key.Right || keyEvent.PhysicalKeycode == Key.Right)
+		{
+			GetViewport().SetInputAsHandled();
+			OnContinueRequested();
+		}
+	}
+
 	public override void _Process(double delta)
 	{
 		if (!running || currentStep == null)

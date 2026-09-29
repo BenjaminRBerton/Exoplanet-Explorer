@@ -62,6 +62,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private TutorialCalloutPlacement requestedCalloutPlacement;
 	private TutorialImagePlacement requestedImagePlacement;
 	private float requestedImageWidthPercent = 40f;
+	private float requestedGalleryAspectRatio = 1f;
 	private Rect2 visibleFocusRect;
 	private bool stepVisible;
 	private double pulseTime;
@@ -398,8 +399,11 @@ public partial class TutorialOverlay : CanvasLayer
 		float widthPercent)
 	{
 		requestedImagePlacement = placement;
-		requestedImageWidthPercent = Mathf.Clamp(widthPercent, 5f, 95f);
+		requestedImageWidthPercent = Mathf.Clamp(widthPercent, 5f, 100f);
 		ClearSlideImages();
+		// Do not let the dimensions calculated for the previous slide influence this slide's
+		// initial minimum-size calculation.
+		slideImages.CustomMinimumSize = Vector2.Zero;
 		List<Texture2D> textures = new();
 		if (imagePaths != null)
 		{
@@ -422,13 +426,24 @@ public partial class TutorialOverlay : CanvasLayer
 			textures.Count,
 			Mathf.Max(0, gap),
 			requestedImageWidthPercent);
+		requestedGalleryAspectRatio = 0f;
+		foreach (Texture2D texture in textures)
+		{
+			if (texture.GetHeight() > 0)
+			{
+				requestedGalleryAspectRatio += (float)texture.GetWidth() / texture.GetHeight();
+			}
+		}
+		requestedGalleryAspectRatio = Mathf.Max(0.01f, requestedGalleryAspectRatio);
 		bool sidePlacement = placement is TutorialImagePlacement.Left or TutorialImagePlacement.Right;
 		foreach (Texture2D texture in textures)
 		{
 			TextureRect image = new()
 			{
 				Texture = texture,
-				CustomMinimumSize = sidePlacement ? new Vector2(340f, 440f) : new Vector2(220f, 260f),
+				// Side galleries receive their dimensions from widthPercent in ApplyImageWidth.
+				// A fixed minimum here would override small percentages in compact callouts.
+				CustomMinimumSize = Vector2.Zero,
 				ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
 				StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
 				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -471,9 +486,9 @@ public partial class TutorialOverlay : CanvasLayer
 		bodyLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		bodyLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 		bodyLabel.SizeFlagsStretchRatio = horizontal ? 100f - widthPercent : 1f;
-		slideImages.SizeFlagsHorizontal = placement == TutorialImagePlacement.Center
-			? Control.SizeFlags.ShrinkCenter
-			: Control.SizeFlags.ExpandFill;
+		slideImages.SizeFlagsHorizontal = horizontal
+			? Control.SizeFlags.ExpandFill
+			: Control.SizeFlags.ShrinkCenter;
 		slideImages.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 		slideImages.SizeFlagsStretchRatio = horizontal ? widthPercent : 1f;
 		slideImages.Columns = horizontal ? 1 : Mathf.Max(1, imageCount);
@@ -549,17 +564,28 @@ public partial class TutorialOverlay : CanvasLayer
 	private void ApplyImageWidth()
 	{
 		if (slideImages == null || !slideImages.Visible) return;
+		float availableWidth = Mathf.Max(1f, callout.Size.X - 48f);
+		float galleryWidth = availableWidth * requestedImageWidthPercent / 100f;
 		bool sidePlacement = requestedImagePlacement is
 			TutorialImagePlacement.Left or TutorialImagePlacement.Right;
 		if (sidePlacement)
 		{
-			slideImages.CustomMinimumSize = new Vector2(0f, 440f);
+			float availableHeight = Mathf.Max(
+				120f,
+				callout.Size.Y - (presentationMode ? 150f : 100f));
+			slideImages.CustomMinimumSize = new Vector2(galleryWidth, availableHeight);
 			return;
 		}
 
-		float availableWidth = Mathf.Max(220f, callout.Size.X - 48f);
-		float galleryWidth = availableWidth * requestedImageWidthPercent / 100f;
-		slideImages.CustomMinimumSize = new Vector2(galleryWidth, 260f);
+		float reservedHeight = titleLabel.GetCombinedMinimumSize().Y +
+			bodyLabel.GetCombinedMinimumSize().Y +
+			(footnoteLabel.Visible ? footnoteLabel.GetCombinedMinimumSize().Y : 0f) +
+			140f;
+		float verticalAvailableHeight = Mathf.Max(120f, callout.Size.Y - reservedHeight);
+		float galleryHeight = Mathf.Min(
+			galleryWidth / requestedGalleryAspectRatio,
+			verticalAvailableHeight);
+		slideImages.CustomMinimumSize = new Vector2(galleryWidth, galleryHeight);
 	}
 
 	private Rect2 CalculateVisibleFocusRect(Vector2 viewportSize)

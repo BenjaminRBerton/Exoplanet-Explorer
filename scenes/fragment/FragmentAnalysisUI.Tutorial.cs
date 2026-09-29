@@ -16,6 +16,7 @@ public partial class FragmentAnalysisUI
 		if (registry == null) return;
 
 		Button manualButton = GetNodeOrNull<Button>("%InitialManualButton");
+		Button supportButton = GetNodeOrNull<Button>("%InitialSupportButton");
 		Button autonomousButton = GetNodeOrNull<Button>("%InitialAutonomousButton");
 		Control processingToggles = GetNodeOrNull<Control>("%ProcessingToggles");
 		Control processingSliders = GetNodeOrNull<Control>("%ProcessingSliders");
@@ -28,6 +29,10 @@ public partial class FragmentAnalysisUI
 			tutorialTargets.Add(registry.RegisterControl(
 				TutorialTargetIds.FragmentManualButton,
 				manualButton));
+		if (IsInstanceValid(supportButton))
+			tutorialTargets.Add(registry.RegisterControl(
+				TutorialTargetIds.FragmentSupportButton,
+				supportButton));
 		if (IsInstanceValid(reloadButton))
 			tutorialTargets.Add(registry.RegisterControl(
 				TutorialTargetIds.ReloadFragmentButton,
@@ -40,6 +45,18 @@ public partial class FragmentAnalysisUI
 			tutorialTargets.Add(registry.RegisterControl(
 				TutorialTargetIds.FragmentAutonomousButton,
 				autonomousButton));
+		if (IsInstanceValid(autonomyPerformerButton))
+			tutorialTargets.Add(registry.RegisterControl(
+				TutorialTargetIds.FragmentAutonomyPerformerButton,
+				autonomyPerformerButton));
+		if (IsInstanceValid(autonomyAdvancedButton))
+			tutorialTargets.Add(registry.RegisterControl(
+				TutorialTargetIds.FragmentTaskAllocationButton,
+				autonomyAdvancedButton));
+		if (IsInstanceValid(capabilityOverridesScroll))
+			tutorialTargets.Add(registry.RegisterControl(
+				TutorialTargetIds.FragmentCapabilityOverrides,
+				capabilityOverridesScroll));
 		if (IsInstanceValid(fragmentCanvas))
 			tutorialTargets.Add(registry.RegisterControl(
 				TutorialTargetIds.FragmentCanvas,

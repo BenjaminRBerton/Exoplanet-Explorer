@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://wbqr1dpeo0bd"
-path="res://.godot/imported/IA-5.png-c5c93d2a2f86cdb52cf71f31deadf523.ctex"
+uid="uid://d1cbokjbscqmd"
+path="res://.godot/imported/EXOPLANET-EXPLORER-LOGO-PORTRAIT.png-af5705f78b4bcace6b20add149f21845.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-5.png"
-dest_files=["res://.godot/imported/IA-5.png-c5c93d2a2f86cdb52cf71f31deadf523.ctex"]
+source_file="res://scenes/ui/tutorial/scripts/imagesForPresentation/EXOPLANET-EXPLORER-LOGO-PORTRAIT.png"
+dest_files=["res://.godot/imported/EXOPLANET-EXPLORER-LOGO-PORTRAIT.png-af5705f78b4bcace6b20add149f21845.ctex"]
 
 [params]
 

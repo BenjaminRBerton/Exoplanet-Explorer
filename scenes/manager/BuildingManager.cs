@@ -776,6 +776,20 @@ public partial class BuildingManager : Node
 			robot.BuildingResource.StuckChancePerMove > 0f;
 	}
 
+	private bool ShouldRoverGetStuckInMud(BuildingComponent robot, Vector2I destinationPosition)
+	{
+		return CanRoverGetStuck(robot) &&
+			gridManager.IsTileMud(destinationPosition) &&
+			random.NextDouble() <= robot.BuildingResource.StuckChancePerMove;
+	}
+
+	private static void MarkRoverStuckInMud(BuildingComponent robot)
+	{
+		FloatingTextManager.ShowMessageAtBuildingPosition("Robot is stuck in the mud :-(", robot);
+		Game.UI.GameUI.PushMessage("Robot is stuck in the mud :-(", "red", true);
+		robot.SetToStuck();
+	}
+
 	public void DropResourcesAtBase(List<string> resourceList)
 	{
 		foreach (var resource in resourceList)
@@ -1572,29 +1586,7 @@ public partial class BuildingManager : Node
 			return;
 		}
 
-		if (CanRoverGetStuck(robot) && gridManager.IsTileMud(destinationPosition))
-		{
-			//Higher chance to get stuck on mud
-			double mudChance = random.NextDouble();
-			if (mudChance <= robot.BuildingResource.StuckChancePerMove * 100)
-			{
-				MoveInDirectionAutomated(robot, GetRandomDirection());
-				FloatingTextManager.ShowMessageAtBuildingPosition("Robot is stuck in the mud :-(", robot);
-				Game.UI.GameUI.PushMessage("Robot is stuck in the mud :-(", "red", true);
-				robot.SetToStuck();
-			}
-		}
-		else if (CanRoverGetStuck(robot))
-		{
-			double chance = random.NextDouble();
-			if (chance <= robot.BuildingResource.StuckChancePerMove)
-			{
-				MoveInDirectionAutomated(robot, GetRandomDirection());
-				FloatingTextManager.ShowMessageAtBuildingPosition("Robot is stuck", robot);
-				Game.UI.GameUI.PushMessage("Robot is stuck", "red", true);
-				robot.SetToStuck();
-			}
-		}
+		bool getsStuckInMud = ShouldRoverGetStuckInMud(robot, destinationPosition);
 
 		robot.UpdateMoveHistory(originPos, direction);
 
@@ -1602,6 +1594,10 @@ public partial class BuildingManager : Node
 
 		buildingNode.Position += directionVector * 64;
 		robot.Moved((Vector2I)originPos, destinationPosition);
+		if (getsStuckInMud)
+		{
+			MarkRoverStuckInMud(robot);
+		}
 		//robot.TryDropResourcesAtBase();
 		//EmitSignal(SignalName.AvailableResourceCountChanged, AvailableResourceCount);
 		robot.SetToIdle();
@@ -1663,32 +1659,10 @@ public partial class BuildingManager : Node
 				}
 			}
 
+			bool getsStuckInMud;
 			using (Telemetry.Scope("BuildingManager.MoveInDirectionAutomated.StuckCheck"))
 			{
-				if (CanRoverGetStuck(robot) && gridManager.IsTileMud(destinationPosition))
-				{
-					double mudChance = random.NextDouble();
-					if (mudChance <= robot.BuildingResource.StuckChancePerMove * 100)
-					{
-						MoveInDirectionAutomated(robot, GetRandomDirection());
-						FloatingTextManager.ShowMessageAtBuildingPosition("Robot is stuck in the mud :-(", robot);
-						Game.UI.GameUI.PushMessage("Robot is stuck in the mud :-(", "red", true);
-						robot.SetToStuck();
-						return false;
-					}
-				}
-				else if (CanRoverGetStuck(robot))
-				{
-					double chance = random.NextDouble();
-					if (chance <= robot.BuildingResource.StuckChancePerMove)
-					{
-						MoveInDirectionAutomated(robot, GetRandomDirection());
-						FloatingTextManager.ShowMessageAtBuildingPosition("Robot is stuck", robot);
-						Game.UI.GameUI.PushMessage("Robot is stuck", "red", true);
-						robot.SetToStuck();
-						return false;
-					}
-				}
+				getsStuckInMud = ShouldRoverGetStuckInMud(robot, destinationPosition);
 			}
 
 			using (Telemetry.Scope("BuildingManager.MoveInDirectionAutomated.CommitMove"))
@@ -1703,6 +1677,12 @@ public partial class BuildingManager : Node
 				buildingNode.Position += directionVector * 64;
 				robot.Moved((Vector2I)originPos, destinationPosition);
 				//robot.TryDropResourcesAtBase();
+			}
+
+			if (getsStuckInMud)
+			{
+				MarkRoverStuckInMud(robot);
+				return false;
 			}
 
 			return true;
