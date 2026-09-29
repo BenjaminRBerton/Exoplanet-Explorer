@@ -86,6 +86,7 @@ public sealed class TutorialStepBuilder
 	private bool dimBackground = true;
 	private TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto;
 	private readonly List<string> imagePaths = new();
+	private readonly List<string> imageCaptions = new();
 	private TutorialImagePlacement imagePlacement = TutorialImagePlacement.Bottom;
 	private int imageGap = 16;
 	private float imageWidthPercent = 40f;
@@ -170,6 +171,7 @@ public sealed class TutorialStepBuilder
 		float widthPercent = 40f)
 	{
 		imagePaths.Clear();
+		imageCaptions.Clear();
 		AddImagePath(resourcePath);
 		imagePlacement = placement;
 		imageGap = Math.Max(0, gap);
@@ -210,6 +212,7 @@ public sealed class TutorialStepBuilder
 		float widthPercent = 40f)
 	{
 		imagePaths.Clear();
+		imageCaptions.Clear();
 		if (resourcePaths != null)
 		{
 			foreach (string resourcePath in resourcePaths)
@@ -220,6 +223,20 @@ public sealed class TutorialStepBuilder
 		imagePlacement = placement;
 		imageGap = Math.Max(0, gap);
 		imageWidthPercent = Math.Clamp(widthPercent, 5f, 100f);
+		return this;
+	}
+
+	/// <summary>Adds captions corresponding by index to the configured slide images.</summary>
+	public TutorialStepBuilder WithImageCaptions(params string[] captions)
+	{
+		imageCaptions.Clear();
+		if (captions != null)
+		{
+			foreach (string caption in captions)
+			{
+				imageCaptions.Add(caption ?? string.Empty);
+			}
+		}
 		return this;
 	}
 
@@ -307,6 +324,7 @@ public sealed class TutorialStepBuilder
 			dimBackground,
 			calloutPlacement,
 			imagePaths.AsReadOnly(),
+			imageCaptions.AsReadOnly(),
 			imagePlacement,
 			imageGap,
 			imageWidthPercent,

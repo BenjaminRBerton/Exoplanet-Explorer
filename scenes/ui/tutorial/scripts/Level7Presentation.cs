@@ -30,13 +30,13 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.educational-challenge")
 			.Say("WHY HAVE WE CREATED THIS GAME?",
-				"Systems of greater and greater autonomy are being developed, especially now with the advent of agentic Artificial Intelligence.\n\n• Integrating autonomous agents into complex sociotechnical systems creates new design challenges for future engineers.\n\n• Interdependence Analysis helps model joint activity and derive human-autonomy teaming requirements.\n\n• Learners rarely have direct experience with autonomous agents, so the concepts remain abstract and text-based cases limit experimentation. Interdependence analysis is hard to learn, and even harder to teach.")
+				"Systems of greater autonomy are being developed, especially since the advent of agentic Artificial Intelligence.\n\n• Integrating autonomous agents into complex sociotechnical systems creates new design challenges for future engineers.\n\n• At our school, we teach Interdependence Analysis, which helps model joint activity and derive human-autonomy teaming requirements.\n\n• Learners rarely have direct experience with autonomous agents, so the concepts remain abstract and text-based cases limit experimentation. Interdependence analysis is hard to learn, [i]and even harder to teach.[/i]")
 			.WithFootnote("Johnson et al., 2011 — Coactive Design: Designing Support for Interdependence in Joint Activity")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
 		presentation.Step("demo.educational-question")
-			.Say("","How can students observe these interdependencies, test them, and derive interface requirements from them?")
+			.Say("","How can students better integrate the concepts of autonomy, teaming, and interdependence?")
 			.EmphasizeBody(fontScale: 1.45f, bold: true)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
@@ -175,6 +175,18 @@ public sealed class Level7Presentation : TutorialScript
 			.PointTo(TutorialTargetIds.SelectedRoverBattery)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
+		presentation.Step("demo.game12-rover-state")
+			.Say("OBSERVABILITY — MONITOR THE ROVER",
+				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+			.PointTo(TutorialTargetIds.ResourcesCarried)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
+		presentation.Step("demo.game13-rover-state")
+			.Say("OBSERVABILITY — MONITOR THE ROVER",
+				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+			.PointTo(TutorialTargetIds.AnomalyIndicator)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
 		presentation.Step("demo.game12-drone")
 			.Say("DEPLOY AN AERIAL DRONE",
@@ -192,7 +204,7 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game14-capacities")
 			.Say("LET'S DO THE ANALYSIS",
-				"Let us now take the student's perspective.\n\nLet's use the game as the environment in which we observe behavior, test assumptions, and gather evidence for an Interdependence Analysis.")
+				"Let's now take the student's perspective.\n\nWe will use the game as the environment in which we observe behavior, test assumptions, and gather evidence for an Interdependence Analysis.")
 			.EmphasizeBody(fontScale: 1.2f, bold: true)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
@@ -201,7 +213,7 @@ public sealed class Level7Presentation : TutorialScript
 		presentation.Step("demo.game15-IA")
 			.Say("1 · START WITH A PROCEDURE AND A CAPACITY",
 				"Our worksheet decomposes the procedure MOVING TO POSITION into capacities that can be assessed for every teammate and team configuration.\n\nWe begin with SELECTING A DESTINATION. The cells are intentionally blank: the student must determine who can perform this capacity, and  who can support it.")
-			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-1.png",
+			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-blank.png",
 				TutorialImagePlacement.Bottom, gap: 38, widthPercent: 96f)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
@@ -234,7 +246,7 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game19-IA-terrain-question")
 			.Say("4 · DECOMPOSE UNTIL DIFFERENCES BECOME VISIBLE",
-				"By filling the table and testing in the game, we can list detail the capabilities of each robot. For instance, their movement through grass, trees, cliffs, and mud.")
+				"By filling the table and testing in the game, we can detail the capabilities of each robot. For instance, their movement through grass, trees, cliffs, and mud.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-4.png",
 				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
 			.HardPause()
@@ -273,71 +285,45 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game21-sample-analysis")
 			.Say("ANOTHER TEAMING MECHANIC — FRAGMENT ANALYSIS",
-				"A monolith fragment encodes a bearing toward the final objective. Analysing it is a multistage cognitive task—not a single robot command.\n\nBring the rover within analysis range of the highlighted fragment and select it. This lets us demonstrate how the same activity changes under different function allocations.")
-			.PointTo(TutorialTargetIds.MonolithFragment)
-			.GuideAction().UndimBackground()
+				"A monolith fragment encodes a bearing toward the final objective. Analysing it is a multistage cognitive task.\n\n. The game allows to demonstrate function allocation and adaptable autonomy for that analysis activity.")
+			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen).UntilContinue();
 
 		presentation.Step("demo.game21-open-analysis")
-			.Say("OPEN THE SAMPLE ANALYSER",
-				"The rover has collected a view of the fragment. Open Analyse Sample to decide how the human and rover will share the analysis work.")
-			.PointTo(TutorialTargetIds.AnalyseSampleButton)
+			.Say("SAMPLE ANALYSIS",
+				"Let's analyse a fragment.")
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
 			.Until(TutorialEvent.FragmentAnalysisOpened, IsRover).OrContinue();
 
-		presentation.Step("demo.game21-choose-support")
-			.Say("CONFIGURE THE INITIAL FUNCTION ALLOCATION",
-				"The same analysis supports three allocations:\n\nMANUAL — the human performs the analysis\nROVER SUPPORT — the human performs while the rover assists\nROVER AUTONOMOUS — the rover performs while the human supervises\n\nChoose Rover Support first to expose the interdependence.")
-			.PointTo(TutorialTargetIds.FragmentSupportButton)
+		presentation.Step("demo.game21-choose-manual")
+			.Say("FUNCTION ALLOCATION",
+				"The same analysis supports three allocations:\n\nMANUAL — the human performs the analysis independently\nROVER SUPPORT — the human performs while the rover assists\nROVER AUTONOMOUS — the rover performs while the human assists\n\nWe will try manually first to explain the concept.")
+			.PointTo(TutorialTargetIds.FragmentManualButton)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.Until(TutorialEvent.FragmentModeSelected,
-				context => context.Payload is int mode && mode == 1).OrContinue();
+				context => context.Payload is int mode && mode == 0).OrContinue();
 
-		presentation.Step("demo.game21-support-workflow")
-			.Say("SUPPORT MODE — NEITHER TEAMMATE WORKS ALONE",
-				"The rover contributes sensing, candidate detection, and measured recommendations. The human inspects the evidence, accepts or rejects proposals, and makes decisions where judgment is required.\n\nShow one analysis stage: the robot makes information observable, but the player retains authority. This is interdependence made playable.")
+		presentation.Step("demo.game21-manual-workflow")
+			.Say("MANUAL ANALYSIS",
+				"The goal is to extract an information encoded in the fragment, with the hope that this will lead us to reveal the monolith's position.")
 			.PointTo(TutorialTargetIds.FragmentCanvas)
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
-			.UntilContinue();
-
-		presentation.Step("demo.game21-open-task-allocation")
-			.Say("ADAPTABLE AUTONOMY — OPEN TASK ALLOCATION",
-				"The global mode is only a starting point. Open Task Allocation to redistribute individual analysis functions while the activity is underway.")
-			.PointTo(TutorialTargetIds.FragmentTaskAllocationButton)
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
-			.UntilTargetPressed().OrContinue();
-
-		presentation.Step("demo.game21-configure-task-allocation")
-			.Say("CONFIGURABLE, FUNCTION BY FUNCTION",
-				"Each function can inherit the global mode or be assigned OFF, SUPPORTER, or PERFORMER. Capability constraints disable allocations the rover cannot fulfill, while reliability settings expose imperfect support.\n\nThis operationalizes the capacity assessment: function allocation can adapt to the situation without treating autonomy as one fixed level.")
-			.PointTo(TutorialTargetIds.FragmentCapabilityOverrides)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.UntilContinue();
 
 		presentation.Step("demo.game21-increase-autonomy")
-			.Say("SHIFT THE ROVER TO PERFORMER",
-				"Select Autonomous to move execution authority toward the rover. The human does not disappear: the rover performs what its capabilities permit and pauses at consequential judgment points for human review.")
+			.Say("AUTONOMOUS ANALYSIS",
+				"The rover performs what its capabilities permit and pauses at predefined judgment points for human review.")
 			.PointTo(TutorialTargetIds.FragmentAutonomyPerformerButton)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.UntilTargetPressed().OrContinue();
 
-		presentation.Step("demo.game21-autonomous-workflow")
-			.Say("AUTONOMOUS EXECUTION WITH HUMAN CHECKPOINTS",
-				"Watch the rover progress through sensing, region interpretation, reconstruction, orientation, and direction extraction. At uncertainty or decision boundaries, control returns to the human.\n\nThis combines greater autonomy with observability, directability, and explicit interdependence. Let the workflow run, or press Next to keep the demonstration brief.")
-			.PointTo(TutorialTargetIds.FragmentCanvas)
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
-			.Until(TutorialEvent.FragmentAnalysisCompleted).OrContinue();
-
 		presentation.Step("demo.game21-analysis-result")
 			.Say("A JOINTLY PRODUCED RESULT",
-				"When the workflow completes, the analysis converts the fragment's encoded arrow into a world bearing and adds it to the mission display. The result is produced through a configurable combination of robot execution and human judgment.")
+				"When the workflow completes, the analysis converts the fragment's encoded arrow into a world bearing and adds it to the mission display.")
 			.PointTo(TutorialTargetIds.FragmentCanvas)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
@@ -345,27 +331,29 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game21-exit-analysis")
 			.Say("RETURN TO THE MISSION",
-				"Exit the analyser. The team can now act on the jointly produced bearing to continue the search for the monolith.")
+				"The team can now act on the jointly produced bearing to continue the search for the monolith.")
 			.PointTo(TutorialTargetIds.FragmentExitButton)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.Until(TutorialEvent.FragmentAnalysisExited).OrContinue();
 
-		presentation.Step("demo.design-chain")
-			.Say("INTERDEPENDENCE ANALYSIS AS A DESIGN CHAIN",
-				"1 · JOINT ACTIVITY\nBreak down tasks and their relationships\n\n→  2 · CAPABILITIES\nWho can do what, under which constraints?\n\n→  3 · INTERDEPENDENCIES\nWhere do actors constrain or complement one another?\n\n→  4 · HAT REQUIREMENTS\nObservability · Predictability · Directability\n\nEXPECTED OUTCOME\nMove from observed behavior to a traceable rationale for information, coordination, and control needs in the interface.")
-			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
-			.HardPause().UntilContinue();
+		presentation.Step("demo.game22-resume-mission")
+			.Say("RETURN TO THE MISSION",
+				"The team can now act on the jointly produced bearing to continue the search for the monolith.")
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.UntilContinue();
 
 		presentation.Step("demo.course-implementation")
 			.Say("COURSE IMPLEMENTATION",
-				"• Graduate human factors course focused on HAT — Fall 2025\n• 24 students completed an Interdependence Analysis assignment using the game\n• Tasks: model the work, assess robot capabilities, identify teaming requirements, and propose interface improvements\n\nEXPLORATORY EVALUATION — 7 VOLUNTEERS (CER-2526-19-D)\n\nDuring the assignment — n = 6\nMetacognitive regulation, analysis strategies, and resources used\n\nAfter the assignment — n = 7\nSelf-reports, perceived learning, and areas for improvement\n\nLikert scales and open-ended responses were analyzed using inductive qualitative content analysis. Results concern reported perceptions and reasoning, not a causal measure of performance.")
+				"• Graduate human factors course focused on HAT — Fall 2025\n• 24 students completed an Interdependence Analysis assignment using the game\n• Tasks: model the work, assess robot capabilities, identify teaming requirements, and propose interface improvements\n\nEXPLORATORY EVALUATION — 7 VOLUNTEERS (CER-2526-19-D)\n\nDuring the assignment — n = 6\nMetacognitive regulation, analysis strategies, and resources used\n\nAfter the assignment — n = 7\nSelf-reports, perceived learning, and areas for improvement\n\nLikert scales and open-ended responses were analyzed using inductive qualitative content analysis.")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
 		presentation.Step("demo.results")
 			.Say("RESULTS", "Questionnaires — Fall 2025")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
+			.EmphasizeBody(fontScale: 1.45f, bold: true)
 			.HardPause().UntilContinue();
 
 		presentation.Step("demo.metacognitive-regulation")
@@ -382,7 +370,7 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.perceived-learning")
 			.Say("AFTER THE ASSIGNMENT — PERCEIVED LEARNING",
-				"ALL 7 PARTICIPANTS AGREED OR STRONGLY AGREED THAT THE ACTIVITY HELPED THEM:\n\n• Better represent human–autonomy interactions — 4 agree, 3 strongly agree\n• Understand task interdependence — 3 agree, 4 strongly agree\n• Understand interface issues for teaming — 1 agree, 6 strongly agree\n• Analyze the reciprocal effects of human and agent actions — 3 agree, 4 strongly agree\n• Feel comfortable analyzing a complex situation involving an autonomous agent — 4 agree, 3 strongly agree\n\n6/7 identified iteration as essential; 6/7 described learning interdependence through direct involvement.")
+				"ALL 7 PARTICIPANTS AGREED OR STRONGLY AGREED THAT THE VIDEOGAME HELPED THEM:\n\n• Better represent human–autonomy interactions — 4 agree, 3 strongly agree\n• Understand task interdependence — 3 agree, 4 strongly agree\n• Understand interface issues for teaming — 1 agree, 6 strongly agree\n• Analyze the reciprocal effects of human and agent actions — 3 agree, 4 strongly agree\n• Feel comfortable analyzing a complex situation involving an autonomous agent — 4 agree, 3 strongly agree\n\n6/7 identified iteration as essential; 6/7 described learning interdependence through direct involvement.")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -406,19 +394,25 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.contribution")
 			.Say("CONTRIBUTION TO THE HAT COMMUNITY",
-				"• AN EDUCATIONAL TOOL ALIGNED WITH A METHOD\nGame mechanics make Interdependence Analysis constructs observable and open to discussion.\n\n• A BRIDGE BETWEEN THEORY AND BEHAVIOR\nStudents test a hypothesis, observe actual agent capabilities, and revise their model.\n\n• A CONFIGURABLE SCENARIO\nMaps, team composition, and levels of autonomy vary the coordination problems.\n\n• AN OPEN, CROSS-PLATFORM RESOURCE\nReusable for teaching and potentially as a starting point for HAT research.\n\nCORE CONTRIBUTION\nSupporting the translation of observable system behavior into a reasoned human–autonomy teaming requirement.")
+				"• AN EDUCATIONAL TOOL ALIGNED WITH A METHOD\nGame mechanics make Interdependence Analysis constructs palpable.\n\n• A BRIDGE BETWEEN THEORY AND BEHAVIOR\nStudents test a hypothesis, observe actual agent capabilities, and revise their model.\n\n• A CONFIGURABLE SCENARIO\nMaps, team composition, and levels of autonomy may be varied by users to create different coordination problems.\n\n• AN OPEN, CROSS-PLATFORM RESOURCE\nReusable for teaching and potentially as a starting point for HAT research.")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
 		presentation.Step("demo.conclusion")
-			.Say("CONCLUSION",
-				"A tangible environment that promotes reflective revision of a complex human–robot activity analysis.\n\n• Exploratory data suggest support for hypothesis testing, model revision, and perceived understanding of interdependence.\n• Limitations: small volunteer sample, one course, primarily self-reported measures, and no experimental comparison.\n• Next steps: larger cohorts, objective measures of transfer, and evaluation of changes made to the game.\n\nOpen-source game and repository\nZenodo DOI: 10.5281/zenodo.18651448\n\nWe welcome collaborations!")
-			.WithImage("res://assets/HAT_game_logo_cropped.png")
+			.Say("GET IN TOUCH",
+				"game release and code repository available here : \nhttps://benjaminrberton.github.io/projects/exoplanet-explorer/ \n\n Zenodo repository DOI: 10.5281/zenodo.18651448\n\nContact me for help, demonstration, training, or if you have a job offer:\n[font_size=38]benjaminberton64@gmail.com[/font_size]\n\nWe welcome collaborations! If enough people are interested, we will port the game to a web-based version for easier access and distribution.")
+			.WithImages(
+				TutorialImagePlacement.Bottom,
+				32,
+				70f,
+				"res://assets/EXOPLANET-EXPLORER-LOGO-PORTRAIT.png",
+				"res://scenes/ui/tutorial/scripts/imagesForPresentation/qr.png")
+			.WithImageCaptions("", "scan for game-release/repo")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
 		presentation.Step("demo.references")
-			.Say("KEY REFERENCES",
+			.Say("REFERENCES",
 				"• Cooke et al. (2020) — Human–Autonomy Teaming\n• Johnson et al. (2011) — Coactive design and Interdependence Analysis\n• Johnson et al. (2009) — Joint Activity Testbed: Blocks World for Teams (BW4T). DOI: 10.1007/978-3-642-10203-5_26\n• Hellar & McNeese (2010) — NeoCITIES\n• Bishop et al. (2020) — CHAOPT: A Testbed for Evaluating Human–Autonomy Team Collaboration Using the Video Game Overcooked! 2. DOI: 10.1109/SIEDS49339.2020.9106686\n• van der Waa & Haije (2023) — MATRX: Human-Agent Teaming Rapid Experimentation software. DOI: 10.5281/zenodo.8154912\n• NASA Langley Research Center (2024) — HAT Task Battery\n• Smith et al. (2024) — Challenges of educational HAT platforms\n\nEXOPLANET EXPLORER\n10.5281/zenodo.18651448")
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();

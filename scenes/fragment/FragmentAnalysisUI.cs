@@ -104,7 +104,8 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 		{
 			GenerateFragmentForAnalysisPass(
 				"MANUAL / INITIAL",
-				Level3TutorialManualSeed);
+				Level3TutorialManualSeed,
+				Level7PresentationManualSeed);
 		}
 		else
 		{
@@ -188,13 +189,13 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 	private void OnRotateCounterClockwisePressed()
 	{
 		DispatchManualRotation(
-			fragmentCanvas.DisplayRotationDegrees - RotationStepDegrees);
+			GetManualRotationOffsetDegrees() - RotationStepDegrees);
 	}
 
 	private void OnRotateClockwisePressed()
 	{
 		DispatchManualRotation(
-			fragmentCanvas.DisplayRotationDegrees + RotationStepDegrees);
+			GetManualRotationOffsetDegrees() + RotationStepDegrees);
 	}
 
 	private void OnFineRotationChanged(double value)
@@ -203,13 +204,16 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 		DispatchManualRotation((float)value);
 	}
 
-	private void DispatchManualRotation(float degrees)
+	private void DispatchManualRotation(float offsetDegrees)
 	{
+		float absoluteRotation = fragmentCanvas.Puzzle == null
+			? offsetDegrees
+			: fragmentCanvas.Puzzle.InitialRotationDegrees + offsetDegrees;
 		suppressSectionAutoScroll = true;
 		try
 		{
 			DispatchAnalysisCommand(FragmentAnalysisCommand.Rotation(
-				degrees,
+				absoluteRotation,
 				FragmentAnalysisActionOrigin.Player));
 		}
 		finally
@@ -241,12 +245,22 @@ public partial class FragmentAnalysisUI : CanvasLayer, IFragmentAnalysisCommandS
 
 	private void UpdateRotationLabel()
 	{
-		float rotation = fragmentCanvas.DisplayRotationDegrees;
+		float rotation = GetManualRotationOffsetDegrees();
 		rotationValueLabel.Text = $"ROTATION: {rotation:+0.0;-0.0;0.0}°";
 		if (!IsInstanceValid(fineRotationSpinBox)) return;
 		isSyncingRotationControl = true;
 		fineRotationSpinBox.Value = rotation;
 		isSyncingRotationControl = false;
+	}
+
+	private float GetManualRotationOffsetDegrees()
+	{
+		if (fragmentCanvas?.Puzzle == null) return 0f;
+		return Mathf.Wrap(
+			fragmentCanvas.DisplayRotationDegrees -
+			fragmentCanvas.Puzzle.InitialRotationDegrees,
+			-180f,
+			180f);
 	}
 
 	public float CaptureRegionRotationDegrees(int regionId) =>

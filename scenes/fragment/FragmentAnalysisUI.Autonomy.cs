@@ -873,7 +873,7 @@ public partial class FragmentAnalysisUI
 			MinValue = -180, MaxValue = 180,
 			Suffix = "°",
 			CustomMinimumSize = new Vector2(104, AngularSpinBoxMinimumHeight),
-			TooltipText = "Set the rotation precisely in 1-degree steps."
+			TooltipText = "Set the rotation adjustment from the starting pose in 1-degree steps."
 		};
 		rotateClockwiseButton = new Button
 		{
@@ -2779,7 +2779,8 @@ public void DispatchAnalysisConfiguration(
 		fragmentAnalysisRover.SetMode(FragmentAutonomyMode.Off);
 		GenerateFragmentForAnalysisPass(
 			"AUTONOMOUS / RELOAD",
-			Level3TutorialAutonomousSeed);
+			Level3TutorialAutonomousSeed,
+			Level7PresentationAutonomousSeed);
 		hasPublishedGlyphRevealed = false;
 		hasPublishedGlyphUpright = false;
 		hasPublishedAnalysisCompleted = false;

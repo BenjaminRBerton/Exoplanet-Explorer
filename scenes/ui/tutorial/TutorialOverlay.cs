@@ -44,7 +44,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private PanelContainer callout;
 	private Panel calloutAttentionBorder;
 	private Label titleLabel;
-	private Label bodyLabel;
+	private RichTextLabel bodyLabel;
 	private Label footnoteLabel;
 	private VBoxContainer slideStage;
 	private BoxContainer slideLayout;
@@ -54,6 +54,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private Button continueButton;
 	private Button previousButton;
 	private Button closeWindowButton;
+	private Button restorePresentationButton;
 	private Button quitTutorialButton;
 	private Label slideProgressLabel;
 	private Cursor tutorialCursor;
@@ -68,6 +69,10 @@ public partial class TutorialOverlay : CanvasLayer
 	private double pulseTime;
 	private double stepVisibleSeconds;
 	private bool presentationMode;
+	private bool presentationMinimized;
+	private bool requestedDimBackground = true;
+
+	public bool IsPresentationMinimized => presentationMinimized;
 
 	public override void _Ready()
 	{
@@ -83,7 +88,7 @@ public partial class TutorialOverlay : CanvasLayer
 		callout = GetNode<PanelContainer>("%Callout");
 		calloutAttentionBorder = GetNode<Panel>("%CalloutAttentionBorder");
 		titleLabel = GetNode<Label>("%TitleLabel");
-		bodyLabel = GetNode<Label>("%BodyLabel");
+		bodyLabel = GetNode<RichTextLabel>("%BodyLabel");
 		footnoteLabel = GetNode<Label>("%FootnoteLabel");
 		slideStage = GetNode<VBoxContainer>("%SlideStage");
 		slideLayout = GetNode<BoxContainer>("%SlideLayout");
@@ -93,6 +98,7 @@ public partial class TutorialOverlay : CanvasLayer
 		continueButton = GetNode<Button>("%ContinueButton");
 		previousButton = GetNode<Button>("%PreviousButton");
 		closeWindowButton = GetNode<Button>("%CloseWindowButton");
+		restorePresentationButton = GetNode<Button>("%RestorePresentationButton");
 		quitTutorialButton = GetNode<Button>("%QuitTutorialButton");
 		slideProgressLabel = GetNode<Label>("%SlideProgressLabel");
 		tutorialCursor = GetNodeOrNull<Cursor>("/root/Cursor");
@@ -101,11 +107,13 @@ public partial class TutorialOverlay : CanvasLayer
 			continueButton,
 			previousButton,
 			closeWindowButton,
+			restorePresentationButton,
 			quitTutorialButton
 		});
 		continueButton.Pressed += OnContinuePressed;
 		previousButton.Pressed += OnPreviousPressed;
 		closeWindowButton.Pressed += OnCloseWindowPressed;
+		restorePresentationButton.Pressed += OnCloseWindowPressed;
 		quitTutorialButton.Pressed += OnQuitTutorialPressed;
 		GetViewport().SizeChanged += RefreshLayout;
 		HideStep();
@@ -126,6 +134,10 @@ public partial class TutorialOverlay : CanvasLayer
 		{
 			closeWindowButton.Pressed -= OnCloseWindowPressed;
 		}
+		if (restorePresentationButton != null)
+		{
+			restorePresentationButton.Pressed -= OnCloseWindowPressed;
+		}
 		if (quitTutorialButton != null)
 		{
 			quitTutorialButton.Pressed -= OnQuitTutorialPressed;
@@ -138,7 +150,7 @@ public partial class TutorialOverlay : CanvasLayer
 
 	public override void _Process(double delta)
 	{
-		if (!stepVisible)
+		if (!stepVisible || presentationMinimized)
 		{
 			return;
 		}
@@ -176,6 +188,7 @@ public partial class TutorialOverlay : CanvasLayer
 		bool dimBackground = true,
 		TutorialCalloutPlacement calloutPlacement = TutorialCalloutPlacement.Auto,
 		IReadOnlyList<string> imagePaths = null,
+		IReadOnlyList<string> imageCaptions = null,
 		TutorialImagePlacement imagePlacement = TutorialImagePlacement.Bottom,
 		int imageGap = 16,
 		float imageWidthPercent = 40f,
@@ -191,30 +204,37 @@ public partial class TutorialOverlay : CanvasLayer
 		footnoteLabel.Visible = !string.IsNullOrWhiteSpace(footnote);
 		requestedFocusRect = targetScreenRect;
 		requestedCalloutPlacement = calloutPlacement;
+		requestedDimBackground = dimBackground;
+		SetPresentationMinimized(false);
 		if (presentationMode)
 		{
 			bool fullScreenSlide = calloutPlacement == TutorialCalloutPlacement.FullScreen;
 			float resolvedBodyScale = Mathf.Clamp(bodyFontScale, 0.75f, 2f);
 			titleLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 42 : 28);
-			bodyLabel.AddThemeFontSizeOverride(
-				"font_size",
-				Mathf.RoundToInt((fullScreenSlide ? 26f : 20f) * resolvedBodyScale));
-			ApplyPresentationFont(
+			int bodyFontSize = Mathf.RoundToInt(
+				(fullScreenSlide ? 26f : 20f) * resolvedBodyScale);
+			ApplyRichTextFontSize(bodyLabel, bodyFontSize);
+			string[] bodyFontFamilies =
+				{ "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" };
+			int bodyFontWeight = bodyBold ? 700 : 400;
+			ApplyPresentationRichTextFont(
 				bodyLabel,
-				CreatePresentationFont(
-					new[] { "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" },
-					bodyBold ? 700 : 400));
+				CreatePresentationFont(bodyFontFamilies, bodyFontWeight),
+				CreatePresentationFont(bodyFontFamilies, bodyFontWeight, true));
 			footnoteLabel.AddThemeFontSizeOverride("font_size", fullScreenSlide ? 14 : 12);
 		}
 		continueButton.Visible = showContinue;
 		previousButton.Visible = presentationMode && showPrevious;
 		slideProgressLabel.Visible = presentationMode && !string.IsNullOrWhiteSpace(progressText);
 		slideProgressLabel.Text = progressText ?? string.Empty;
-		// Presentation slides already provide explicit Back, Next, and Exit controls.
-		// Hiding the tutorial-only close action avoids accidentally advancing a slide.
-		closeWindowButton.Visible = !presentationMode;
+		closeWindowButton.Visible = true;
 		quitTutorialButton.Visible = showQuitTutorial;
-		SetSlideImages(imagePaths, imagePlacement, imageGap, imageWidthPercent);
+		SetSlideImages(
+			imagePaths,
+			imageCaptions,
+			imagePlacement,
+			imageGap,
+			imageWidthPercent);
 
 		// A guided step with no resolved target is the safe text-only fallback: the dimmer remains
 		// visible, but input passes through so a missing registration cannot trap the player.
@@ -253,53 +273,70 @@ public partial class TutorialOverlay : CanvasLayer
 				new[] { "OCR A", "OCR-A", "OCR B", "IBM Plex Mono", "monospace" }, 700);
 
 			ApplyPresentationFont(titleLabel, headingFont);
-			ApplyPresentationFont(bodyLabel, bodyFont);
+			ApplyPresentationRichTextFont(
+				bodyLabel,
+				bodyFont,
+				CreatePresentationFont(
+					new[] { "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" },
+					400,
+					true));
 			ApplyPresentationFont(footnoteLabel, bodyFont);
 			ApplyPresentationFont(continueButton, bodyFont);
 			ApplyPresentationFont(previousButton, bodyFont);
 			ApplyPresentationFont(closeWindowButton, bodyFont);
+			ApplyPresentationFont(restorePresentationButton, bodyFont);
 			ApplyPresentationFont(quitTutorialButton, bodyFont);
 			ApplyPresentationFont(slideProgressLabel, bodyFont);
 			ApplyPresentationColors();
 
 			titleLabel.AddThemeFontSizeOverride("font_size", 34);
-			bodyLabel.AddThemeFontSizeOverride("font_size", 23);
+			ApplyRichTextFontSize(bodyLabel, 23);
 			titleLabel.AddThemeConstantOverride("line_spacing", 4);
-			bodyLabel.AddThemeConstantOverride("line_spacing", 4);
+			bodyLabel.AddThemeConstantOverride("line_separation", 4);
 			continueButton.Text = "NEXT";
-			quitTutorialButton.Text = "EXIT PRESENTATION";
-			closeWindowButton.Text = "HIDE SLIDE  X";
+			quitTutorialButton.Text = "QUIT";
+			closeWindowButton.Text = "-";
+			closeWindowButton.TooltipText = "Minimize slide";
+			closeWindowButton.CustomMinimumSize = new Vector2(44f, 38f);
 		}
 		else
 		{
+			SetPresentationMinimized(false);
 			slideTopSpacer.Visible = false;
 			slideBottomSpacer.Visible = false;
 			ApplyPresentationFont(titleLabel, null);
-			ApplyPresentationFont(bodyLabel, null);
+			ApplyPresentationRichTextFont(bodyLabel, null, null);
 			ApplyPresentationFont(footnoteLabel, null);
 			ApplyPresentationFont(continueButton, null);
 			ApplyPresentationFont(previousButton, null);
 			ApplyPresentationFont(closeWindowButton, null);
+			ApplyPresentationFont(restorePresentationButton, null);
 			ApplyPresentationFont(quitTutorialButton, null);
 			ApplyPresentationFont(slideProgressLabel, null);
 			RemovePresentationColors();
 
 			titleLabel.AddThemeFontSizeOverride("font_size", 28);
-			bodyLabel.AddThemeFontSizeOverride("font_size", 19);
+			ApplyRichTextFontSize(bodyLabel, 19);
 			titleLabel.RemoveThemeConstantOverride("line_spacing");
-			bodyLabel.RemoveThemeConstantOverride("line_spacing");
+			bodyLabel.RemoveThemeConstantOverride("line_separation");
 			continueButton.Text = "CONTINUE";
 			quitTutorialButton.Text = "QUIT TUTORIAL";
 			closeWindowButton.Text = "CLOSE WINDOW  X";
+			closeWindowButton.TooltipText = "Close this tutorial window";
+			closeWindowButton.CustomMinimumSize = new Vector2(165f, 38f);
 		}
 	}
 
-	private static SystemFont CreatePresentationFont(string[] familyNames, int weight)
+	private static SystemFont CreatePresentationFont(
+		string[] familyNames,
+		int weight,
+		bool italic = false)
 	{
 		return new SystemFont
 		{
 			FontNames = familyNames,
 			FontWeight = weight,
+			FontItalic = italic,
 		};
 	}
 
@@ -307,13 +344,14 @@ public partial class TutorialOverlay : CanvasLayer
 	{
 		callout.AddThemeStyleboxOverride("panel", CreatePresentationPanelStyle());
 		titleLabel.AddThemeColorOverride("font_color", Colors.Black);
-		bodyLabel.AddThemeColorOverride("font_color", Colors.Black);
+		bodyLabel.AddThemeColorOverride("default_color", Colors.Black);
 		footnoteLabel.AddThemeColorOverride("font_color", new Color(0.32f, 0.32f, 0.32f));
 		slideProgressLabel.AddThemeColorOverride("font_color", Colors.Black);
 
 		ApplyPresentationButtonStyle(continueButton, false);
 		ApplyPresentationButtonStyle(previousButton, false);
 		ApplyPresentationButtonStyle(closeWindowButton, false);
+		ApplyPresentationButtonStyle(restorePresentationButton, false);
 		ApplyPresentationButtonStyle(quitTutorialButton, true);
 	}
 
@@ -321,13 +359,14 @@ public partial class TutorialOverlay : CanvasLayer
 	{
 		callout.RemoveThemeStyleboxOverride("panel");
 		titleLabel.RemoveThemeColorOverride("font_color");
-		bodyLabel.RemoveThemeColorOverride("font_color");
+		bodyLabel.RemoveThemeColorOverride("default_color");
 		footnoteLabel.RemoveThemeColorOverride("font_color");
 		slideProgressLabel.RemoveThemeColorOverride("font_color");
 
 		RemovePresentationButtonStyle(continueButton);
 		RemovePresentationButtonStyle(previousButton);
 		RemovePresentationButtonStyle(closeWindowButton);
+		RemovePresentationButtonStyle(restorePresentationButton);
 		RemovePresentationButtonStyle(quitTutorialButton);
 	}
 
@@ -392,8 +431,37 @@ public partial class TutorialOverlay : CanvasLayer
 		control.AddThemeFontOverride("font", font);
 	}
 
+	private static void ApplyPresentationRichTextFont(
+		RichTextLabel control,
+		Font normalFont,
+		Font italicFont)
+	{
+		if (normalFont == null)
+		{
+			control.RemoveThemeFontOverride("normal_font");
+			control.RemoveThemeFontOverride("bold_font");
+			control.RemoveThemeFontOverride("italics_font");
+			control.RemoveThemeFontOverride("bold_italics_font");
+			return;
+		}
+
+		control.AddThemeFontOverride("normal_font", normalFont);
+		control.AddThemeFontOverride("bold_font", normalFont);
+		control.AddThemeFontOverride("italics_font", italicFont ?? normalFont);
+		control.AddThemeFontOverride("bold_italics_font", italicFont ?? normalFont);
+	}
+
+	private static void ApplyRichTextFontSize(RichTextLabel control, int fontSize)
+	{
+		control.AddThemeFontSizeOverride("normal_font_size", fontSize);
+		control.AddThemeFontSizeOverride("bold_font_size", fontSize);
+		control.AddThemeFontSizeOverride("italics_font_size", fontSize);
+		control.AddThemeFontSizeOverride("bold_italics_font_size", fontSize);
+	}
+
 	private void SetSlideImages(
 		IReadOnlyList<string> imagePaths,
+		IReadOnlyList<string> imageCaptions,
 		TutorialImagePlacement placement,
 		int gap,
 		float widthPercent)
@@ -436,8 +504,14 @@ public partial class TutorialOverlay : CanvasLayer
 		}
 		requestedGalleryAspectRatio = Mathf.Max(0.01f, requestedGalleryAspectRatio);
 		bool sidePlacement = placement is TutorialImagePlacement.Left or TutorialImagePlacement.Right;
-		foreach (Texture2D texture in textures)
+		for (int index = 0; index < textures.Count; index++)
 		{
+			Texture2D texture = textures[index];
+			VBoxContainer imageFrame = new()
+			{
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+			};
 			TextureRect image = new()
 			{
 				Texture = texture,
@@ -450,7 +524,35 @@ public partial class TutorialOverlay : CanvasLayer
 				SizeFlagsVertical = Control.SizeFlags.ExpandFill,
 				TextureFilter = CanvasItem.TextureFilterEnum.Linear,
 			};
-			slideImages.AddChild(image);
+			imageFrame.AddChild(image);
+
+			string captionText = imageCaptions != null && index < imageCaptions.Count
+				? imageCaptions[index]
+				: string.Empty;
+			if (imageCaptions != null && index < imageCaptions.Count)
+			{
+				Label caption = new()
+				{
+					Text = captionText,
+					CustomMinimumSize = new Vector2(0f, presentationMode ? 28f : 22f),
+					HorizontalAlignment = HorizontalAlignment.Center,
+					AutowrapMode = TextServer.AutowrapMode.WordSmart,
+					SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				};
+				caption.AddThemeFontSizeOverride("font_size", presentationMode ? 18 : 14);
+				if (presentationMode)
+				{
+					caption.AddThemeColorOverride("font_color", Colors.Black);
+					ApplyPresentationFont(
+						caption,
+						CreatePresentationFont(
+							new[] { "OCR B", "OCR-B", "OCRB", "IBM Plex Mono", "monospace" },
+							700));
+				}
+				imageFrame.AddChild(caption);
+			}
+
+			slideImages.AddChild(imageFrame);
 		}
 		slideImages.Visible = textures.Count > 0;
 	}
@@ -518,6 +620,7 @@ public partial class TutorialOverlay : CanvasLayer
 
 	public void HideStep()
 	{
+		SetPresentationMinimized(false);
 		stepVisible = false;
 		requestedFocusRect = null;
 		requestedCalloutPlacement = TutorialCalloutPlacement.Auto;
@@ -535,9 +638,40 @@ public partial class TutorialOverlay : CanvasLayer
 		tutorialCursor?.SetPopupCursorOverride(false);
 	}
 
+	public void SetPresentationMinimized(bool minimized)
+	{
+		presentationMinimized = presentationMode && minimized;
+		if (callout == null || restorePresentationButton == null)
+		{
+			return;
+		}
+
+		callout.Visible = !presentationMinimized;
+		restorePresentationButton.Visible = presentationMinimized;
+		if (presentationMinimized)
+		{
+			SetBlockersVisible(false);
+			focusBorder.Visible = false;
+			arrowLine.Visible = false;
+			arrowHead.Visible = false;
+			calloutAttentionBorder.Visible = false;
+			tutorialCursor?.SetPopupCursorOverride(false);
+			return;
+		}
+
+		SetBlockersVisible(requestedDimBackground);
+		stepVisibleSeconds = 0d;
+		calloutAttentionBorder.Visible = false;
+		if (stepVisible)
+		{
+			tutorialCursor?.SetPopupCursorOverride(true);
+			RefreshLayout();
+		}
+	}
+
 	public void RefreshLayout()
 	{
-		if (!stepVisible || overlayRoot == null)
+		if (!stepVisible || overlayRoot == null || presentationMinimized)
 		{
 			return;
 		}

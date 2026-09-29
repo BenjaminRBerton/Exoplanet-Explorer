@@ -244,6 +244,7 @@ public partial class TutorialDirector : Node
 				dimBackground: currentStep.DimBackground,
 				calloutPlacement: GetMissingTargetPlacement(),
 				imagePaths: currentStep.ImagePaths,
+				imageCaptions: currentStep.ImageCaptions,
 				imagePlacement: currentStep.ImagePlacement,
 				imageGap: currentStep.ImageGap,
 				imageWidthPercent: currentStep.ImageWidthPercent,
@@ -289,6 +290,7 @@ public partial class TutorialDirector : Node
 			dimBackground: currentStep.DimBackground,
 			calloutPlacement: GetMissingTargetPlacement(),
 			imagePaths: currentStep.ImagePaths,
+			imageCaptions: currentStep.ImageCaptions,
 			imagePlacement: currentStep.ImagePlacement,
 			imageGap: currentStep.ImageGap,
 			imageWidthPercent: currentStep.ImageWidthPercent,
@@ -312,6 +314,7 @@ public partial class TutorialDirector : Node
 			dimBackground: currentStep.DimBackground,
 			calloutPlacement: currentStep.CalloutPlacement,
 			imagePaths: currentStep.ImagePaths,
+			imageCaptions: currentStep.ImageCaptions,
 			imagePlacement: currentStep.ImagePlacement,
 			imageGap: currentStep.ImageGap,
 			imageWidthPercent: currentStep.ImageWidthPercent,
@@ -423,6 +426,20 @@ public partial class TutorialDirector : Node
 	private void OnCloseWindowRequested()
 	{
 		if (currentStep == null) return;
+		if (presentationMode)
+		{
+			bool minimize = !overlay.IsPresentationMinimized;
+			overlay.SetPresentationMinimized(minimize);
+			if (minimize)
+			{
+				RestorePausePolicy();
+			}
+			else
+			{
+				ApplyPausePolicy(currentStep.Mode);
+			}
+			return;
+		}
 		if (currentStep.Completion.AllowsContinue)
 		{
 			CompleteCurrentStep();
