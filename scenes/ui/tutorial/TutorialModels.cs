@@ -220,6 +220,7 @@ public sealed class TutorialStep
 	public bool DimBackground { get; }
 	public TutorialCalloutPlacement CalloutPlacement { get; }
 	public IReadOnlyList<string> ImagePaths { get; }
+	public IReadOnlyList<string> ImageCaptions { get; }
 	public TutorialImagePlacement ImagePlacement { get; }
 	public int ImageGap { get; }
 	public float ImageWidthPercent { get; }
@@ -241,6 +242,7 @@ public sealed class TutorialStep
 		bool dimBackground,
 		TutorialCalloutPlacement calloutPlacement,
 		IReadOnlyList<string> imagePaths,
+		IReadOnlyList<string> imageCaptions,
 		TutorialImagePlacement imagePlacement,
 		int imageGap,
 		float imageWidthPercent,
@@ -260,6 +262,7 @@ public sealed class TutorialStep
 		DimBackground = dimBackground;
 		CalloutPlacement = calloutPlacement;
 		ImagePaths = imagePaths ?? Array.Empty<string>();
+		ImageCaptions = imageCaptions ?? Array.Empty<string>();
 		ImagePlacement = imagePlacement;
 		ImageGap = imageGap;
 		ImageWidthPercent = imageWidthPercent;

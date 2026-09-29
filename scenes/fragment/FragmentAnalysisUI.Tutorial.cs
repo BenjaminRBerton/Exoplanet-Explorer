@@ -7,6 +7,8 @@ public partial class FragmentAnalysisUI
 {
 	private const ulong Level3TutorialManualSeed = 273060694UL;
 	private const ulong Level3TutorialAutonomousSeed = 2504846179UL;
+	private const ulong Level7PresentationManualSeed = 881840862UL;
+	private const ulong Level7PresentationAutonomousSeed = 231429598UL;
 
 	private readonly List<TutorialTargetRegistration> tutorialTargets = new();
 
@@ -109,19 +111,30 @@ public partial class FragmentAnalysisUI
 		return null;
 	}
 
-	private void GenerateFragmentForAnalysisPass(string analysisPass, ulong? tutorialSeed)
+	private void GenerateFragmentForAnalysisPass(
+		string analysisPass,
+		ulong? level3TutorialSeed,
+		ulong? level7PresentationSeed)
 	{
 		bool isLevel3Tutorial = IsLevel3TutorialAnalysis();
-		bool useFixedTutorialSeed = isLevel3Tutorial && tutorialSeed.HasValue;
+		bool isLevel7Presentation = IsLevel7PresentationAnalysis();
+		ulong? fixedTutorialSeed = isLevel3Tutorial
+			? level3TutorialSeed
+			: isLevel7Presentation ? level7PresentationSeed : null;
+		bool useFixedTutorialSeed = fixedTutorialSeed.HasValue;
 		if (useFixedTutorialSeed)
-			fragmentCanvas.GenerateFragmentFromSeed(tutorialSeed.Value);
+			fragmentCanvas.GenerateFragmentFromSeed(fixedTutorialSeed.Value);
 		else
 			fragmentCanvas.GenerateFragment();
 
-		if (!isLevel3Tutorial || fragmentCanvas?.Puzzle == null) return;
+		if ((!isLevel3Tutorial && !isLevel7Presentation) || fragmentCanvas?.Puzzle == null)
+			return;
 
+		string tutorialName = isLevel3Tutorial
+			? "LEVEL 3 TUTORIAL"
+			: "LEVEL 7 PRESENTATION";
 		GD.Print(
-			$"[LEVEL 3 TUTORIAL FRAGMENT — " +
+			$"[{tutorialName} FRAGMENT — " +
 			$"{(useFixedTutorialSeed ? "FIXED" : "RANDOM CANDIDATE")}] {analysisPass} | " +
 			$"SEED={fragmentCanvas.Puzzle.Seed} | " +
 			$"GLYPH={fragmentCanvas.Puzzle.GlyphType}");
@@ -131,4 +144,9 @@ public partial class FragmentAnalysisUI
 		LevelManager.IsTutorialModeActive &&
 		GetParent() is Game.BaseLevel level &&
 		level.LevelId == TutorialCatalog.Level3Id;
+
+	private bool IsLevel7PresentationAnalysis() =>
+		LevelManager.IsTutorialModeActive &&
+		GetParent() is Game.BaseLevel level &&
+		level.LevelId == TutorialCatalog.Level7PresentationId;
 }

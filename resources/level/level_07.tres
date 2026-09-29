@@ -8,5 +8,5 @@ Id = "conference_demo"
 StartingWoodCount = 30
 StartingMaterialCount = 20
 LevelScenePath = "res://scenes/level/Level7.tscn"
-LevelDuration = 12000
+LevelDuration = 1200
 RoverCanGetStuck = true
