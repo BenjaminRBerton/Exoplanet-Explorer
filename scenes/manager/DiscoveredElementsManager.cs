@@ -40,8 +40,6 @@ public partial class DiscoveredElementsManager : Node
 	[Export]
 	private PackedScene greenOreScene;
 	[Export]
-	private PackedScene mudScene;
-	[Export]
 	private TileMapLayer cloudLayer;
 	private Dictionary<Vector2I, Node2D> tileToDiscoveredElements = new();
 	private Dictionary<Vector2I, DiscoveredElements> tiletoDarkenedElements = new();
@@ -148,7 +146,16 @@ public partial class DiscoveredElementsManager : Node
 		// Ground-level elements share the terrain canvas depth so they remain visible,
 		// but stay in the earlier ground-prop branch so dynamically added robots draw
 		// above them. Standing props such as trees remain in the regular Y-sorted layer.
-		var elementNode2D = type == "mud" || type == "trunk"
+		// Mud is already painted in the level's MudLayer and revealed by the fog
+		// system. Instantiating another sprite here produces a duplicate at a
+		// different canvas depth, which can draw over robots.
+		if (type == "mud")
+		{
+			displayedElementTiles.Add(tile);
+			return;
+		}
+
+		var elementNode2D = type == "trunk"
 			? discoveredElements.GetNode<Node2D>("%GroundElementNode2D")
 			: discoveredElements.GetNode<Node2D>("%ElementNode2D");
 
@@ -211,10 +218,6 @@ public partial class DiscoveredElementsManager : Node
 				break;
 			case "green_ore":
 				elementScene = greenOreScene.Instantiate<Sprite2D>();
-				elementHolder.AddChild(elementScene);
-				break;
-			case "mud":
-				elementScene = mudScene.Instantiate<Sprite2D>();
 				elementHolder.AddChild(elementScene);
 				break;
 		}

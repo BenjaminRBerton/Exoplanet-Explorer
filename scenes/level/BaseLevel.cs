@@ -117,7 +117,8 @@ public partial class BaseLevel : Node
 		{
 			return;
 		}
-		if (levelDefinitionResource.Id == TutorialCatalog.Level3Id)
+		if (levelDefinitionResource.Id == TutorialCatalog.Level3Id ||
+			levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
 		{
 			foreach (MonolithFragment fragment in this.GetNodesOfType<MonolithFragment>())
 				fragment.SetVariant(MonolithFragment.Variant.Hominid);
@@ -178,6 +179,7 @@ public partial class BaseLevel : Node
 		if (levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
 		{
 			RegisterPresentationRobotTargets();
+			gameCamera.SetKeyboardPanningEnabled(false);
 		}
 		if (levelDefinitionResource.Id == TutorialCatalog.Level3Id)
 		{
@@ -334,11 +336,24 @@ public partial class BaseLevel : Node
 				fragment.Show();
 			}
 		}
+		else if (stepId == "demo.game21-sample-analysis")
+		{
+			MonolithFragment fragment = this.GetNodesOfType<MonolithFragment>().FirstOrDefault();
+			if (GodotObject.IsInstanceValid(fragment))
+			{
+				gameCamera.CenterOnPositionClamped(fragment.GlobalPosition);
+			}
+		}
 	}
 
 	private void OnTutorialEnded()
 	{
 		CancelTutorialPointerLatch();
+		if (levelDefinitionResource?.Id == TutorialCatalog.Level7PresentationId &&
+			GodotObject.IsInstanceValid(gameCamera))
+		{
+			gameCamera.SetKeyboardPanningEnabled(true);
+		}
 	}
 
 	private void CancelTutorialPointerLatch()

@@ -173,7 +173,7 @@ public sealed class TutorialStepBuilder
 		AddImagePath(resourcePath);
 		imagePlacement = placement;
 		imageGap = Math.Max(0, gap);
-		imageWidthPercent = Math.Clamp(widthPercent, 5f, 95f);
+		imageWidthPercent = Math.Clamp(widthPercent, 5f, 100f);
 		return this;
 	}
 
@@ -219,7 +219,7 @@ public sealed class TutorialStepBuilder
 		}
 		imagePlacement = placement;
 		imageGap = Math.Max(0, gap);
-		imageWidthPercent = Math.Clamp(widthPercent, 5f, 95f);
+		imageWidthPercent = Math.Clamp(widthPercent, 5f, 100f);
 		return this;
 	}
 

@@ -1490,8 +1490,24 @@ public partial class GridManager : Node
 
 	public bool IsTileMud(Vector2I tilePosition)
 	{
-		(_, bool isMud) = GetTileCustomData(tilePosition, IS_MUD);
-		return isMud;
+		// Mud is an overlay above the base terrain. The generic lookup returns the
+		// first populated layer, so it commonly sees the grass tile's false value
+		// before reaching MudLayer. Search for the positive flag instead.
+		foreach (var layer in allTilemapLayers)
+		{
+			var customData = layer.GetCellTileData(tilePosition);
+			if (customData == null || (bool)customData.GetCustomData(IS_IGNORED))
+			{
+				continue;
+			}
+
+			if ((bool)customData.GetCustomData(IS_MUD))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private void OnBuildingPlaced(BuildingComponent buildingComponent)

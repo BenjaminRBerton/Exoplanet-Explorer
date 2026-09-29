@@ -23,7 +23,8 @@ public sealed class Level7Presentation : TutorialScript
 		presentation.Step("demo.introduction").When(TutorialEvent.LevelReady)
 			.Say("EXOPLANET EXPLORER",
 				"An open-source educational video game for teaching human-autonomy teaming\n\n\n\nBenjamin Rémi Berton & Philippe Doyon-Poulin, Polytechnique Montréal\n\n\n\n\n\nASPIRE 2026 Demonstration")
-			.WithImage("res://assets/HAT_game_logo_cropped.png")
+			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/EXOPLANET-EXPLORER-LOGO-PORTRAIT.png",
+				TutorialImagePlacement.Bottom, gap: 32, widthPercent: 100f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -52,7 +53,7 @@ public sealed class Level7Presentation : TutorialScript
 				"NASA's Human-Autonomy Teaming Task Battery provides controlled, repeatable tasks for studying human interaction with autonomous teammates.\n\nSTRENGTH\nHigh experimental control across reusable human-in-the-loop tasks.\n\nPUBLIC AVAILABILITY\nAlthough described by NASA Langley Research Center, we could not identify a public release or download.")
 			.WithFootnote("NASA Langley Research Center, 2024 — Human-Autonomy Teaming Task Battery (HATTB)")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/HATTB.png",
-				TutorialImagePlacement.Right, gap: 16, widthPercent: 65f)
+				TutorialImagePlacement.Right, gap: 16, widthPercent: 45f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -61,7 +62,7 @@ public sealed class Level7Presentation : TutorialScript
 				"NeoCITIES simulates distributed command-and-control work in which team members manage unfolding emergency events.\n\nSTRENGTH\nA controlled setting for studying teamwork, communication, and shared situation awareness.\n\nPUBLIC AVAILABILITY\nNeoCITIES does not appear to be publicly available, and no open-source distribution has been identified.")
 			.WithFootnote("Hellar & McNeese, 2010 — NeoCITIES")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/NeoCITIES.png",
-				TutorialImagePlacement.Right, gap: 32, widthPercent: 65f)
+				TutorialImagePlacement.Right, gap: 32, widthPercent: 45f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -70,7 +71,7 @@ public sealed class Level7Presentation : TutorialScript
 				"In Blocks World 4 Teams, human and software teammates coordinate the collection and delivery of colored blocks.\n\nSTRENGTH\nOpen, accessible, and highly controllable for studying coordination strategies.\n\nEDUCATIONAL GAP\nIts abstract grid world lacks immersion.")
 			.WithFootnote("Johnson et al., 2009 — Joint Activity Testbed: Blocks World for Teams (BW4T) · DOI: 10.1007/978-3-642-10203-5_26")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/BW4T.png",
-				TutorialImagePlacement.Right, 40)
+				TutorialImagePlacement.Right, widthPercent: 35f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -79,7 +80,7 @@ public sealed class Level7Presentation : TutorialScript
 				"MATRX—Human-Agent Teaming Rapid Experimentation software is an open Python framework for rapidly building configurable human-agent teamwork experiments.\n\nSTRENGTH\nReusable components, transparent implementation, and strong experimental flexibility.\n\nEDUCATIONAL GAP\nA general-purpose framework still requires instructors to create the scenario, scaffolding, and explicit method alignment.")
 			.WithFootnote("van der Waa & Haije, 2023 — MATRX, version 2.3.2 · DOI: 10.5281/zenodo.8154912")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/matrx.png",
-				TutorialImagePlacement.Right, 40)
+				TutorialImagePlacement.Right, widthPercent: 45f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -88,7 +89,7 @@ public sealed class Level7Presentation : TutorialScript
 				"Bishop and colleagues used Overcooked! 2 for studying Performance and Teaming using a commercial off-the-shelf video game as its HAT environment.\n\nSTRENGTH\nA polished and engaging setting for observing coordination under time pressure.\n\nLIMITATION\nThe \"autonomous\" teammate is an experimental confederate remotely controlling the second chef.\nOvercooked! 2 is not open source, and not configurable as a reusable HAT testbed.")
 			.WithFootnote("Bishop et al., 2020 — CHAOPT: A Testbed for Evaluating Human-Autonomy Team Collaboration Using Overcooked! 2 · DOI: 10.1109/SIEDS49339.2020.9106686")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/chaopt.png",
-				TutorialImagePlacement.Right, 40, widthPercent: 65f)
+				TutorialImagePlacement.Right, 40, widthPercent: 55f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
 
@@ -99,7 +100,6 @@ public sealed class Level7Presentation : TutorialScript
 				TutorialImagePlacement.Bottom, 40, widthPercent: 100f)
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.HardPause().UntilContinue();
-
 
 		presentation.Step("demo.game1")
 			.Say("EXOPLANET EXPLORER — THE GAME",
@@ -191,8 +191,8 @@ public sealed class Level7Presentation : TutorialScript
 			.Until(TutorialEvent.BuildingPlaced, IsDrone).OrContinue();
 
 		presentation.Step("demo.game14-capacities")
-			.Say("ENOUGH TALKING — LET'S DO THE ANALYSIS",
-				"Let us now take the student's—or analyst's—perspective.\n\nThe game is not the analysis itself. It is the environment in which we observe behavior, test assumptions, and gather evidence for an Interdependence Analysis.")
+			.Say("LET'S DO THE ANALYSIS",
+				"Let us now take the student's perspective.\n\nLet's use the game as the environment in which we observe behavior, test assumptions, and gather evidence for an Interdependence Analysis.")
 			.EmphasizeBody(fontScale: 1.2f, bold: true)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
@@ -200,24 +200,23 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game15-IA")
 			.Say("1 · START WITH A PROCEDURE AND A CAPACITY",
-				"Our worksheet decomposes the procedure MOVING TO POSITION into capacities that can be assessed for every teammate and team configuration.\n\nWe begin with SELECTING A DESTINATION. The cells are intentionally blank: the student must determine who can perform this capacity, who can support it, and who cannot contribute.")
+				"Our worksheet decomposes the procedure MOVING TO POSITION into capacities that can be assessed for every teammate and team configuration.\n\nWe begin with SELECTING A DESTINATION. The cells are intentionally blank: the student must determine who can perform this capacity, and  who can support it.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-1.png",
-				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
+				TutorialImagePlacement.Bottom, gap: 38, widthPercent: 96f)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.UntilContinue();
 
 		presentation.Step("demo.game16-IA-observe-selection")
 			.Say("TEST THE ASSUMPTION IN THE GAME",
-				"In this mode, the HUMAN selects a destination for a robot. Demonstrate it now by selecting the rover and choosing a destination.\n\nWatch what the robots contribute: both independently check whether the selected tile is a valid destination. That support can prevent an invalid command and improve reliability.\n\nPress Next after the demonstration to record the assessment.")
-			.PointTo(TutorialTargetIds.DeployedRover)
+				"In MOVING TO POSITION mode, the HUMAN (player) selects a destination for a robot. Let me try that.\n\nWatch what the robots contribute: both independently check whether the selected tile is a valid destination. That support can prevent an invalid command and improve reliability.\n\nPress Next after the demonstration to record the assessment.")
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
 			.UntilContinue();
 
 		presentation.Step("demo.game17-IA-selection-result")
 			.Say("2 · RECORD CAPACITY TO PERFORM AND SUPPORT",
-				"For Team Alternative 1, the HUMAN is GREEN: they can perform destination selection.\n\nThe UGV and UAV are YELLOW: they support the task by independently validating the destination tile. This redundant check improves reliability.\n\nGREEN = capacity to perform\nYELLOW = capacity to support\nRED = no capacity in this configuration")
+				"For Team Alternative 1, the HUMAN can perform destination selection and is GREEN.\n\nThe UGV and UAV can support the task by independently validating the destination tile. This redundant check improves reliability and is thus coded YELLOW. For team alternative 2, the UGV or UAV can not perform the task on their own, so they are coded RED.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-2.png",
 				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
 			.HardPause()
@@ -226,7 +225,7 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game18-IA-path")
 			.Say("3 · ASSESS THE NEXT CAPACITY",
-				"The selected destination is a goal—not a route. The robots can optimize and execute a path to that goal, so they are GREEN for OPTIMIZING PATH.\n\nThe human is YELLOW in Team Alternative 1: selecting the goal and monitoring execution supports the robots' planning, but the human does not compute the path.")
+				"With the destination selected, the robots can optimize and execute a path to that goal, so they are GREEN for performing OPTIMIZING PATH.\n\nThe human is YELLOW for performing that task.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-3.png",
 				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
 			.HardPause()
@@ -235,7 +234,7 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game19-IA-terrain-question")
 			.Say("4 · DECOMPOSE UNTIL DIFFERENCES BECOME VISIBLE",
-				"A generic capacity to MOVE would hide important differences between teammates. We therefore assess movement through grass, trees, cliffs, and mud separately.\n\nThese blank rows are hypotheses to test—not answers to guess from the robot names.")
+				"By filling the table and testing in the game, we can list detail the capabilities of each robot. For instance, their movement through grass, trees, cliffs, and mud.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-4.png",
 				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
 			.HardPause()
@@ -251,71 +250,106 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game21-IA-completed-example")
 			.Say("5 · COMPLETE THE EVIDENCE-BASED ASSESSMENT",
-				"The worked assessment now exposes complementary capabilities. In Team Alternative 2, the UGV can move through trees but not over cliffs; the UAV can cross cliffs and mud but not trees. The UGV can still support movement through mud.\n\nThe color pattern makes interdependence visible: team composition changes what the joint system can accomplish and where support is required.")
+				"The worked assessment now exposes complementary capabilities. In Team Alternative 2, the UGV can move through trees but not over cliffs; the UAV can cross cliffs and mud but not trees. The UGV can support movement through mud but is not 100% reliable.\n\nMore importantly, the UGV can climb a cliff if the UAV provides support: the color pattern makes interdependence visible: team composition changes what the joint system can accomplish and where support is required.")
 			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/IA-5.png",
 				TutorialImagePlacement.Bottom, gap: 28, widthPercent: 96f)
 			.HardPause()
 			.PlaceCallout(TutorialCalloutPlacement.FullScreen)
 			.UntilContinue();
 
-		presentation.Step("demo.game15-drone-autonomy")
-			.Say("COMPLEMENTARY CAPABILITIES",
-				"The drone's mobility allows for a team dynamic where the rover explore and identify targets of interest, then the rover can be deployed to analyze them.")
-			.PointTo(TutorialTargetIds.ExplorationModeMenu)
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.Until(TutorialEvent.ExplorationModeSelected, IsDrone).OrContinue();
-
-		presentation.Step("demo.game15-start-aerial-scouting")
-			.Say("AERIAL SCOUTING",
-				"Let's see if we can identify something interesting by launching the drone in random exploration. It uses a greedy search strategy to reveal map terrain.")
-			.PointTo(TutorialTargetIds.StartExplorationButton)
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.Until(TutorialEvent.DroneScoutStarted, IsDrone).OrContinue();
-
-		presentation.Step("demo.game16-team-configurations")
-			.Say("CONFIGURABLE TEAMS",
-				"Scenarios can vary the map and team composition: one human can coordinate multiple rovers and drones with different capability combinations.")
-			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
-
 		presentation.Step("demo.game17-partial-observability")
-			.Say("THE ANOMALY SENSOR",
+			.Say("BACK TO THE GAME OBJECTIVE",
 				"The monolith is known to produce disturbances in the planetary gravitational field. The robots carry an anomaly radar that can be used by the human to understand directions of interest.")
 			.PointTo(TutorialTargetIds.MinimapContainer)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
 		presentation.Step("demo.game20-mission-monitoring")
-			.Say("MONITOR THE MISSION",
-				"The mission display brings together time, resources, and progress. The operator must monitor the team and mission as a whole, as well as individual robots when needed.")
+			.Say("THE GAME UI",
+				"The mission display brings together time, resources, and progress. The operator must monitor the team and mission as a whole, as well as individual robots when needed using the selected robot UI and deployed units UI.")
 			.PointTo(TutorialTargetIds.StatusPanel)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
-		presentation.Step("demo.game21-select-drone-teamwork")
-			.Say("PREPARE A TEAMING ACTION",
-				"Select the drone and position it above the rover. When the Lift Robot control becomes available, press Next. This creates a concrete interdependence: neither robot can complete the transport task alone.")
-			.PointTo(TutorialTargetIds.DeployedDrone)
+		presentation.Step("demo.game21-sample-analysis")
+			.Say("ANOTHER TEAMING MECHANIC — FRAGMENT ANALYSIS",
+				"A monolith fragment encodes a bearing toward the final objective. Analysing it is a multistage cognitive task—not a single robot command.\n\nBring the rover within analysis range of the highlighted fragment and select it. This lets us demonstrate how the same activity changes under different function allocations.")
+			.PointTo(TutorialTargetIds.MonolithFragment)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.FullScreen).UntilContinue();
+
+		presentation.Step("demo.game21-open-analysis")
+			.Say("OPEN THE SAMPLE ANALYSER",
+				"The rover has collected a view of the fragment. Open Analyse Sample to decide how the human and rover will share the analysis work.")
+			.PointTo(TutorialTargetIds.AnalyseSampleButton)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
+			.Until(TutorialEvent.FragmentAnalysisOpened, IsRover).OrContinue();
+
+		presentation.Step("demo.game21-choose-support")
+			.Say("CONFIGURE THE INITIAL FUNCTION ALLOCATION",
+				"The same analysis supports three allocations:\n\nMANUAL — the human performs the analysis\nROVER SUPPORT — the human performs while the rover assists\nROVER AUTONOMOUS — the rover performs while the human supervises\n\nChoose Rover Support first to expose the interdependence.")
+			.PointTo(TutorialTargetIds.FragmentSupportButton)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.Until(TutorialEvent.FragmentModeSelected,
+				context => context.Payload is int mode && mode == 1).OrContinue();
+
+		presentation.Step("demo.game21-support-workflow")
+			.Say("SUPPORT MODE — NEITHER TEAMMATE WORKS ALONE",
+				"The rover contributes sensing, candidate detection, and measured recommendations. The human inspects the evidence, accepts or rejects proposals, and makes decisions where judgment is required.\n\nShow one analysis stage: the robot makes information observable, but the player retains authority. This is interdependence made playable.")
+			.PointTo(TutorialTargetIds.FragmentCanvas)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.UntilContinue();
 
-		presentation.Step("demo.game22-lift-rover")
-			.Say("ROVER–DRONE INTERDEPENDENCE",
-				"When the drone is above the rover, use Lift Robot. The drone supplies mobility across elevation; the rover supplies the surface capabilities needed at the destination.")
-			.PointTo(TutorialTargetIds.LiftRobotButton)
+		presentation.Step("demo.game21-open-task-allocation")
+			.Say("ADAPTABLE AUTONOMY — OPEN TASK ALLOCATION",
+				"The global mode is only a starting point. Open Task Allocation to redistribute individual analysis functions while the activity is underway.")
+			.PointTo(TutorialTargetIds.FragmentTaskAllocationButton)
 			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.Until(TutorialEvent.RobotLiftRequested, IsDrone).OrContinue();
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.UntilTargetPressed().OrContinue();
 
-		presentation.Step("demo.game23-hat-requirements")
-			.Say("WHAT THE GAME MAKES VISIBLE",
-				"OBSERVABILITY — perceive teammate state and knowledge\n\nPREDICTABILITY — anticipate actions and consequences\n\nDIRECTABILITY — influence behavior at the right time\n\nThese are the requirements students derive from the activity they have just observed.")
-			.PointTo(TutorialTargetIds.MinimapContainer)
+		presentation.Step("demo.game21-configure-task-allocation")
+			.Say("CONFIGURABLE, FUNCTION BY FUNCTION",
+				"Each function can inherit the global mode or be assigned OFF, SUPPORTER, or PERFORMER. Capability constraints disable allocations the rover cannot fulfill, while reliability settings expose imperfect support.\n\nThis operationalizes the capacity assessment: function allocation can adapt to the situation without treating autonomy as one fixed level.")
+			.PointTo(TutorialTargetIds.FragmentCapabilityOverrides)
 			.GuideAction().UndimBackground()
-			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.UntilContinue();
+
+		presentation.Step("demo.game21-increase-autonomy")
+			.Say("SHIFT THE ROVER TO PERFORMER",
+				"Select Autonomous to move execution authority toward the rover. The human does not disappear: the rover performs what its capabilities permit and pauses at consequential judgment points for human review.")
+			.PointTo(TutorialTargetIds.FragmentAutonomyPerformerButton)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.UntilTargetPressed().OrContinue();
+
+		presentation.Step("demo.game21-autonomous-workflow")
+			.Say("AUTONOMOUS EXECUTION WITH HUMAN CHECKPOINTS",
+				"Watch the rover progress through sensing, region interpretation, reconstruction, orientation, and direction extraction. At uncertainty or decision boundaries, control returns to the human.\n\nThis combines greater autonomy with observability, directability, and explicit interdependence. Let the workflow run, or press Next to keep the demonstration brief.")
+			.PointTo(TutorialTargetIds.FragmentCanvas)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.Until(TutorialEvent.FragmentAnalysisCompleted).OrContinue();
+
+		presentation.Step("demo.game21-analysis-result")
+			.Say("A JOINTLY PRODUCED RESULT",
+				"When the workflow completes, the analysis converts the fragment's encoded arrow into a world bearing and adds it to the mission display. The result is produced through a configurable combination of robot execution and human judgment.")
+			.PointTo(TutorialTargetIds.FragmentCanvas)
+			.HardPause()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.UntilContinue();
+
+		presentation.Step("demo.game21-exit-analysis")
+			.Say("RETURN TO THE MISSION",
+				"Exit the analyser. The team can now act on the jointly produced bearing to continue the search for the monolith.")
+			.PointTo(TutorialTargetIds.FragmentExitButton)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
+			.Until(TutorialEvent.FragmentAnalysisExited).OrContinue();
 
 		presentation.Step("demo.design-chain")
 			.Say("INTERDEPENDENCE ANALYSIS AS A DESIGN CHAIN",

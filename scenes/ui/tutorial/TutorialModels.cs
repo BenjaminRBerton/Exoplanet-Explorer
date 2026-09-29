@@ -302,8 +302,12 @@ public static class TutorialTargetIds
 	public const string PlaceAntennaButton = "selected-robot-ui.place-antenna";
 	public const string MonolithFragment = "world.monolith-fragment";
 	public const string FragmentManualButton = "fragment-analysis.manual-button";
+	public const string FragmentSupportButton = "fragment-analysis.support-button";
 	public const string ReloadFragmentButton = "fragment-analysis.reload-button";
 	public const string FragmentAutonomousButton = "fragment-analysis.autonomous-button";
+	public const string FragmentAutonomyPerformerButton = "fragment-analysis.autonomy-performer-button";
+	public const string FragmentTaskAllocationButton = "fragment-analysis.task-allocation-button";
+	public const string FragmentCapabilityOverrides = "fragment-analysis.capability-overrides";
 	public const string FragmentExitButton = "fragment-analysis.exit-button";
 	public const string FragmentWorldBearing = "fragment-analysis.world-bearing";
 	public const string FragmentCanvas = "fragment-analysis.canvas";

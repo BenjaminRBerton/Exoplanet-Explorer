@@ -54,6 +54,7 @@ public partial class GameCamera : Camera2D
 	// Mouse drag variables
 	private bool isDragging = false;
 	private bool navigationInputEnabled = true;
+	private bool keyboardPanningEnabled = true;
 	private bool suppressMouseDragUntilRelease = false;
 	private Vector2 lastMousePosition;
 
@@ -118,7 +119,7 @@ public partial class GameCamera : Camera2D
 		switch (currentState)
 		{
 			case State.CameraFree:
-				var movementVector = navigationInputEnabled
+				var movementVector = navigationInputEnabled && keyboardPanningEnabled
 					? Input.GetVector(ACTION_PAN_LEFT, ACTION_PAN_RIGHT, ACTION_PAN_UP, ACTION_PAN_DOWN)
 					: Vector2.Zero;
 				GlobalPosition += movementVector * PAN_SPEED * (float)delta;
@@ -236,6 +237,15 @@ public partial class GameCamera : Camera2D
 	{
 		navigationInputEnabled = enabled;
 		if (!enabled) CancelMouseDrag();
+	}
+
+	/// <summary>
+	/// Enables or disables arrow-key camera panning without affecting mouse navigation or zoom.
+	/// Presentation mode reserves Left and Right for slide navigation.
+	/// </summary>
+	public void SetKeyboardPanningEnabled(bool enabled)
+	{
+		keyboardPanningEnabled = enabled;
 	}
 
 	public void CenterOnPositionClamped(Vector2 position)

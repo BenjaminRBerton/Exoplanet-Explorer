@@ -526,7 +526,8 @@ public partial class GameUI : CanvasLayer
 
 	private void TickMissionTimer()
 	{
-		if (isTimeIsUp || isMissionTimerPaused)
+		bool pauseIndependentTimerActive = pauseIndependentMissionTimer?.IsStopped() == false;
+		if (isTimeIsUp || (isMissionTimerPaused && !pauseIndependentTimerActive))
 		{
 			return;
 		}
