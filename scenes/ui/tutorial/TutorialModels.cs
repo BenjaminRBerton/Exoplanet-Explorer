@@ -285,9 +285,11 @@ public static class TutorialTargetIds
 	public const string PreplacedBase = "world.preplaced-base";
 	public const string DeployedRover = "world.deployed-rover";
 	public const string DeployedDrone = "world.deployed-drone";
+	public const string PresentationDirectedMoveDestination = "world.level7.directed-move-destination";
 	public const string ManualMovementDestination = "world.level1.manual-destination";
 	public const string ReturnDestination = "world.level1.return-destination";
 	public const string DeployedRoverBattery = "game-ui.unit.rover.battery";
+	public const string SelectedRobotUI = "selected-robot-ui";
 	public const string SelectedRoverBattery = "selected-rover-ui.battery";
 	public const string ExplorationModeMenu = "selected-rover-ui.exploration-mode";
 	public const string StartExplorationButton = "selected-rover-ui.start-exploration";
