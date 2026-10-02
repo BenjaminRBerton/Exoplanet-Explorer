@@ -57,6 +57,7 @@ public partial class SelectedRobotUI : CanvasLayer
 
 	private MultiPurposeButtonState currentButtonState;
 	private bool signalsDisconnected;
+	private TutorialTargetRegistration selectedRobotUITutorialTarget;
 	private TutorialTargetRegistration batteryTutorialTarget;
 	private TutorialTargetRegistration explorationModeTutorialTarget;
 	private TutorialTargetRegistration startExplorationTutorialTarget;
@@ -79,6 +80,14 @@ public partial class SelectedRobotUI : CanvasLayer
 
 	public void RegisterTutorialTargets(TutorialTargetRegistry registry)
 	{
+		selectedRobotUITutorialTarget?.Dispose();
+		Control selectedRobotUI = GetNodeOrNull<Control>("MarginContainer");
+		if (registry != null && IsInstanceValid(selectedRobotUI))
+		{
+			selectedRobotUITutorialTarget = registry.RegisterControl(
+				TutorialTargetIds.SelectedRobotUI,
+				selectedRobotUI);
+		}
 		batteryTutorialTarget?.Dispose();
 		Control batteryDisplay = GetNodeOrNull<Control>("%RobotInfoContainer3");
 		if (registry != null && IsInstanceValid(batteryDisplay))
@@ -852,6 +861,8 @@ public partial class SelectedRobotUI : CanvasLayer
 
 	private void DisconnectSignals()
 	{
+		selectedRobotUITutorialTarget?.Dispose();
+		selectedRobotUITutorialTarget = null;
 		batteryTutorialTarget?.Dispose();
 		batteryTutorialTarget = null;
 		explorationModeTutorialTarget?.Dispose();

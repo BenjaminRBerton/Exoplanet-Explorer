@@ -62,6 +62,7 @@ public partial class BaseLevel : Node
 	private TutorialTargetRegistration returnDestinationTutorialTarget;
 	private TutorialTargetRegistration deployedRoverTutorialTarget;
 	private TutorialTargetRegistration deployedDroneTutorialTarget;
+	private TutorialTargetRegistration presentationDirectedMoveDestinationTutorialTarget;
 	private TutorialTargetRegistration monolithFragmentTutorialTarget;
 	private Vector2I level1ManualDestination;
 	private Vector2I level1ReturnDestination;
@@ -222,6 +223,10 @@ public partial class BaseLevel : Node
 
 	private void RegisterPresentationRobotTargets()
 	{
+		presentationDirectedMoveDestinationTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
+			TutorialTargetIds.PresentationDirectedMoveDestination,
+			this,
+			() => GetWorldCellScreenRect(new Vector2I(6, -1)));
 		deployedRoverTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
 			TutorialTargetIds.DeployedRover,
 			this,
@@ -296,6 +301,8 @@ public partial class BaseLevel : Node
 		deployedRoverTutorialTarget = null;
 		deployedDroneTutorialTarget?.Dispose();
 		deployedDroneTutorialTarget = null;
+		presentationDirectedMoveDestinationTutorialTarget?.Dispose();
+		presentationDirectedMoveDestinationTutorialTarget = null;
 		monolithFragmentTutorialTarget?.Dispose();
 		monolithFragmentTutorialTarget = null;
 		if (GodotObject.IsInstanceValid(gameUI))

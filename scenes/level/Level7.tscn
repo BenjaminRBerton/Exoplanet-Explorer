@@ -31,7 +31,7 @@ tile_set = ExtResource("3_jw0nr")
 
 [node name="MudLayer" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer" index="3"]
 y_sort_enabled = true
-tile_map_data = PackedByteArray("AAADAAUADwAAAAAAAAAFAAQADwAAAAAAAAAGAAQADwAAAAAAAAAHAAQADwAAAAAAAAAJAAUADwAAAAAAAAAKAAUADwAAAAAAAAALAAUADwAAAAAAAAAGAPj/DwAAAAAAAAAKAPf/DwAAAAAAAAAJAPn/DwAAAAAAAAA=")
+tile_map_data = PackedByteArray("AAAFAAQADwAAAAAAAAAGAAQADwAAAAAAAAAHAAQADwAAAAAAAAAJAAUADwAAAAAAAAAKAAUADwAAAAAAAAALAAUADwAAAAAAAAAGAPj/DwAAAAAAAAAKAPf/DwAAAAAAAAAJAPn/DwAAAAAAAAA=")
 tile_set = ExtResource("3_jw0nr")
 
 [node name="BridgeLayerBase" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer" index="4"]
