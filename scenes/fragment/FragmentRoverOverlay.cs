@@ -62,6 +62,8 @@ public partial class FragmentRoverOverlay : Control
 	public event Action<int, Rect2> RegionResized;
 	public event Action<int> RegionDeleteRequested;
 	public event Action<int> RegionLockRequested;
+	public event Action<int, FragmentRegionEditAction> RegionActionRequested;
+	public event Action<int, FragmentFeatureEditAction> FeatureActionRequested;
 	public event Action<int, int> StructureEditRequested;
 	public event Action<int, int> StructureValidateRequested;
 	public event Action<int> StructureFeatureToggled;
@@ -385,6 +387,22 @@ public partial class FragmentRoverOverlay : Control
             }
 			if (button.ButtonIndex == MouseButton.Left)
 			{
+				if (button.Pressed && !button.DoubleClick && !regionDrawingArmed &&
+					!arrowDrawingArmed && TryFindFeatureActionButton(
+						button.Position, out int actionFeatureId, out FragmentFeatureEditAction featureAction))
+				{
+					FeatureActionRequested?.Invoke(actionFeatureId, featureAction);
+					AcceptEvent();
+					return;
+				}
+				if (button.Pressed && !button.DoubleClick && !regionDrawingArmed &&
+					!arrowDrawingArmed && TryFindRegionActionButton(
+						button.Position, out int actionRegionId, out FragmentRegionEditAction action))
+				{
+					RegionActionRequested?.Invoke(actionRegionId, action);
+					AcceptEvent();
+					return;
+				}
 				if (button.Pressed && !button.DoubleClick) deleteRegionId = -1;
 				if (button.Pressed && !button.DoubleClick && !regionDrawingArmed &&
 					!arrowDrawingArmed && TryFindStructureValidateButton(
@@ -1306,6 +1324,149 @@ public partial class FragmentRoverOverlay : Control
 		DrawRect(background, new Color(0f, 0f, 0f, 0.9f), true);
 		DrawString(font, background.Position + new Vector2(4f, size.Y), label,
 			HorizontalAlignment.Left, -1, fontSize, color);
+		if (!selected) return;
+		DrawRegionActionButton(
+			GetRegionActionButtonRect(background, accept: true),
+			"ACCEPT",
+			new Color(0.25f, 1f, 0.45f, 1f),
+			region.Disposition != FragmentAnnotationDisposition.Accepted);
+		DrawRegionActionButton(
+			GetRegionActionButtonRect(background, accept: false),
+			"REJECT",
+			new Color(1f, 0.3f, 0.3f, 1f),
+			true);
+		FragmentDetectedFeature feature = GetSelectedFeatureForRegion(region);
+		if (feature == null) return;
+		DrawRegionActionButton(
+			GetFeatureActionButtonRect(background, accept: true),
+			$"ACCEPT FEATURE F{feature.Id}",
+			new Color(0.25f, 1f, 0.45f, 1f),
+			feature.Disposition != FragmentAnnotationDisposition.Accepted);
+		DrawRegionActionButton(
+			GetFeatureActionButtonRect(background, accept: false),
+			$"REJECT FEATURE F{feature.Id}",
+			new Color(1f, 0.3f, 0.3f, 1f),
+			true);
+	}
+
+	private void DrawRegionActionButton(Rect2 button, string label, Color color, bool enabled)
+	{
+		Color resolvedColor = enabled ? color : new Color(0.45f, 0.45f, 0.45f, 1f);
+		DrawRect(button, new Color(0f, 0f, 0f, 0.94f), true);
+		DrawRect(button, resolvedColor, false, 2f);
+		Font font = ThemeDB.FallbackFont;
+		const int fontSize = 12;
+		Vector2 size = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize);
+		DrawString(font,
+			button.Position + new Vector2((button.Size.X - size.X) * 0.5f, 16f),
+			label, HorizontalAlignment.Left, -1, fontSize, resolvedColor);
+	}
+
+	private static Rect2 GetRegionActionButtonRect(Rect2 header, bool accept)
+	{
+		const float width = 64f;
+		const float gap = 4f;
+		float x = header.End.X + gap + (accept ? 0f : width + gap);
+		return new Rect2(new Vector2(x, header.Position.Y), new Vector2(width, header.Size.Y));
+	}
+
+	private static Rect2 GetFeatureActionButtonRect(Rect2 header, bool accept)
+	{
+		const float width = 142f;
+		const float gap = 4f;
+		float x = header.Position.X + (accept ? 0f : width + gap);
+		return new Rect2(
+			new Vector2(x, header.End.Y + gap),
+			new Vector2(width, header.Size.Y));
+	}
+
+	private FragmentDetectedFeature GetSelectedFeatureForRegion(FragmentCandidateRegion region)
+	{
+		if (state?.SelectedFeatureId is not int selectedFeatureId) return null;
+		FragmentDetectedFeature feature = state.DetectedFeatures.Find(candidate =>
+			candidate.Id == selectedFeatureId &&
+			candidate.Disposition != FragmentAnnotationDisposition.Dismissed);
+		if (feature == null || !IsFeatureVisible(feature)) return null;
+		return region.FeatureIds.Contains(feature.Id) ||
+			region.NormalizedBounds.HasPoint(GetFeatureCenter(feature))
+			? feature
+			: null;
+	}
+
+	private bool TryFindFeatureActionButton(
+		Vector2 point,
+		out int featureId,
+		out FragmentFeatureEditAction action)
+	{
+		featureId = -1;
+		action = FragmentFeatureEditAction.Select;
+		if (state?.SelectedRegionId is not int selectedRegionId || !showRegions) return false;
+		FragmentCandidateRegion region = state.CandidateRegions.Find(candidate =>
+			candidate.Id == selectedRegionId &&
+			candidate.Disposition != FragmentAnnotationDisposition.Dismissed);
+		if (region == null ||
+			(!showRoverRegions && region.Provenance == FragmentAnnotationProvenance.Rover)) return false;
+		FragmentDetectedFeature feature = GetSelectedFeatureForRegion(region);
+		if (feature == null) return false;
+		bool locked = state.LockedRegionViews.Exists(view => view.RegionId == region.Id);
+		string label = region.Id == deleteRegionId
+			? $"R{region.Id} · DELETE TO REMOVE"
+			: $"R{region.Id} · {(locked ? "REGION LOCKED" : "DOUBLE CLICK TO RESIZE REGION")}";
+		Font font = ThemeDB.FallbackFont;
+		const int fontSize = 14;
+		Vector2 size = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize);
+		Rect2 header = new(
+			NormalizedRectToViewport(region.NormalizedBounds).Position + new Vector2(3f, 3f),
+			size + new Vector2(8f, 5f));
+		if (GetFeatureActionButtonRect(header, accept: true).Grow(2f).HasPoint(point) &&
+			feature.Disposition != FragmentAnnotationDisposition.Accepted)
+		{
+			featureId = feature.Id;
+			action = FragmentFeatureEditAction.Accept;
+			return true;
+		}
+		if (!GetFeatureActionButtonRect(header, accept: false).Grow(2f).HasPoint(point)) return false;
+		featureId = feature.Id;
+		action = FragmentFeatureEditAction.Dismiss;
+		return true;
+	}
+
+	private bool TryFindRegionActionButton(
+		Vector2 point,
+		out int regionId,
+		out FragmentRegionEditAction action)
+	{
+		regionId = -1;
+		action = FragmentRegionEditAction.Select;
+		if (state?.SelectedRegionId is not int selectedRegionId || !showRegions) return false;
+		FragmentCandidateRegion region = state.CandidateRegions.Find(candidate =>
+			candidate.Id == selectedRegionId &&
+			candidate.Disposition != FragmentAnnotationDisposition.Dismissed);
+		if (region == null ||
+			(!showRoverRegions && region.Provenance == FragmentAnnotationProvenance.Rover)) return false;
+		bool locked = state.LockedRegionViews.Exists(view => view.RegionId == region.Id);
+		string label = $"R{region.Id}";
+		if (region.Id == deleteRegionId)
+			label += " · DELETE TO REMOVE";
+		else
+			label += locked ? " · REGION LOCKED" : " · DOUBLE CLICK TO RESIZE REGION";
+		Font font = ThemeDB.FallbackFont;
+		const int fontSize = 14;
+		Vector2 size = font.GetStringSize(label, HorizontalAlignment.Left, -1, fontSize);
+		Rect2 header = new(
+			NormalizedRectToViewport(region.NormalizedBounds).Position + new Vector2(3f, 3f),
+			size + new Vector2(8f, 5f));
+		if (GetRegionActionButtonRect(header, accept: true).Grow(2f).HasPoint(point) &&
+			region.Disposition != FragmentAnnotationDisposition.Accepted)
+		{
+			regionId = region.Id;
+			action = FragmentRegionEditAction.Accept;
+			return true;
+		}
+		if (!GetRegionActionButtonRect(header, accept: false).Grow(2f).HasPoint(point)) return false;
+		regionId = region.Id;
+		action = FragmentRegionEditAction.Dismiss;
+		return true;
 	}
 
 	private void DrawStructureEditButton(

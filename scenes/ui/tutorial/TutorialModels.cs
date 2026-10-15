@@ -288,7 +288,9 @@ public static class TutorialTargetIds
 	public const string PresentationDirectedMoveDestination = "world.level7.directed-move-destination";
 	public const string ManualMovementDestination = "world.level1.manual-destination";
 	public const string ReturnDestination = "world.level1.return-destination";
+	public const string RoverLiftPosition = "world.level2.rover-lift-position";
 	public const string DeployedRoverBattery = "game-ui.unit.rover.battery";
+	public const string DeployedRoverChargingStatus = "game-ui.unit.rover.charging-status";
 	public const string SelectedRobotUI = "selected-robot-ui";
 	public const string SelectedRoverBattery = "selected-rover-ui.battery";
 	public const string ExplorationModeMenu = "selected-rover-ui.exploration-mode";
@@ -301,7 +303,6 @@ public static class TutorialTargetIds
 	public const string AddMaterialButton = "game-ui.add-material";
 	public const string LiftRobotButton = "selected-robot-ui.lift-robot";
 	public const string CustomPathButton = "selected-robot-ui.custom-path";
-	public const string ExecutePathButton = "game-ui.execute-path";
 	public const string RakePanel = "game-ui.rake";
 	public const string AnalyseSampleButton = "selected-robot-ui.analyse-sample";
 	public const string PlaceAntennaButton = "selected-robot-ui.place-antenna";

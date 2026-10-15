@@ -51,6 +51,7 @@ public partial class FragmentRegionSequenceView : Control
 
 	public event Action<int> RegionSelected;
 	public event Action<int, FragmentRegionEditAction> RegionActionRequested;
+	public event Action<int, FragmentFeatureEditAction> FeatureActionRequested;
 	public event Action<int> RegionLockRequested;
 	public event Action ExitRequested;
 	public event Action PageChanged;
@@ -152,6 +153,15 @@ public partial class FragmentRegionSequenceView : Control
 		FragmentCandidateRegion region = regions[regionIndex];
 		RegionSelected?.Invoke(region.Id);
 		Rect2 pane = GetPaneRect(paneIndex);
+		FragmentDetectedFeature selectedFeature = GetSelectedFeatureForRegion(region, features);
+		if (selectedFeature != null)
+		{
+			if (GetFeatureActionButtonRect(pane, accept: true).HasPoint(button.Position) &&
+				selectedFeature.Disposition != FragmentAnnotationDisposition.Accepted)
+				FeatureActionRequested?.Invoke(selectedFeature.Id, FragmentFeatureEditAction.Accept);
+			else if (GetFeatureActionButtonRect(pane, accept: false).HasPoint(button.Position))
+				FeatureActionRequested?.Invoke(selectedFeature.Id, FragmentFeatureEditAction.Dismiss);
+		}
 		if (region.Disposition == FragmentAnnotationDisposition.Accepted)
 		{
 			if (GetLockButtonRect(pane).HasPoint(button.Position))
@@ -326,8 +336,54 @@ public partial class FragmentRegionSequenceView : Control
 		DrawString(ThemeDB.FallbackFont, pane.Position + new Vector2(12f, 24f),
 			$"R{region.Id}", HorizontalAlignment.Left, -1, 18,
 			regionColor);
+		DrawFeatureActions(pane, region, renderedFeatures);
 		DrawRegionActions(pane, region);
 	}
+
+	private void DrawFeatureActions(
+		Rect2 pane,
+		FragmentCandidateRegion region,
+		IReadOnlyList<FragmentDetectedFeature> renderedFeatures)
+	{
+		FragmentDetectedFeature feature = GetSelectedFeatureForRegion(region, renderedFeatures);
+		if (feature == null) return;
+		DrawBadge(
+			GetFeatureActionButtonRect(pane, accept: true),
+			$"ACCEPT FEATURE F{feature.Id}",
+			feature.Disposition == FragmentAnnotationDisposition.Accepted
+				? new Color(0.45f, 0.45f, 0.45f, 1f)
+				: new Color(0.25f, 1f, 0.45f, 1f));
+		DrawBadge(
+			GetFeatureActionButtonRect(pane, accept: false),
+			$"REJECT FEATURE F{feature.Id}",
+			new Color(1f, 0.3f, 0.35f, 1f));
+	}
+
+	private FragmentDetectedFeature GetSelectedFeatureForRegion(
+		FragmentCandidateRegion region,
+		IReadOnlyList<FragmentDetectedFeature> renderedFeatures)
+	{
+		if (!selectedFeatureId.HasValue || !showFeatures) return null;
+		foreach (FragmentDetectedFeature feature in renderedFeatures)
+		{
+			if (feature.Id != selectedFeatureId.Value ||
+				feature.Disposition == FragmentAnnotationDisposition.Dismissed) continue;
+			if (DoesFeatureIntersectRegion(feature, region.NormalizedBounds)) return feature;
+		}
+		return null;
+	}
+
+	private static bool DoesFeatureIntersectRegion(FragmentDetectedFeature feature, Rect2 region)
+	{
+		if (feature.Segments == null || feature.Segments.Count == 0)
+			return SegmentIntersectsRegion(feature.Start, feature.End, region);
+		foreach (FragmentFeatureSegment segment in feature.Segments)
+			if (SegmentIntersectsRegion(segment.Start, segment.End, region)) return true;
+		return false;
+	}
+
+	private static bool SegmentIntersectsRegion(Vector2 start, Vector2 end, Rect2 region) =>
+		ClipSegment(region, ref start, ref end);
 
 	private void DrawOrientationStructure(
 		Rect2 region,
@@ -493,6 +549,15 @@ public partial class FragmentRegionSequenceView : Control
 
 	private static Rect2 GetLockButtonRect(Rect2 pane) =>
 		new(pane.End - new Vector2(193f, 34f), new Vector2(80f, 25f));
+
+	private static Rect2 GetFeatureActionButtonRect(Rect2 pane, bool accept)
+	{
+		const float width = 142f;
+		const float gap = 6f;
+		return new Rect2(
+			pane.Position + new Vector2(48f + (accept ? 0f : width + gap), 7f),
+			new Vector2(width, 25f));
+	}
 
 	private void DrawFeatureAnnotations(
 		Rect2 region,

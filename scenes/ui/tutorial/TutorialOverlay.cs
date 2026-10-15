@@ -58,6 +58,7 @@ public partial class TutorialOverlay : CanvasLayer
 	private Button quitTutorialButton;
 	private Label slideProgressLabel;
 	private Cursor tutorialCursor;
+	private Control deployedUnitsPanel;
 
 	private Rect2? requestedFocusRect;
 	private TutorialCalloutPlacement requestedCalloutPlacement;
@@ -102,6 +103,11 @@ public partial class TutorialOverlay : CanvasLayer
 		quitTutorialButton = GetNode<Button>("%QuitTutorialButton");
 		slideProgressLabel = GetNode<Label>("%SlideProgressLabel");
 		tutorialCursor = GetNodeOrNull<Cursor>("/root/Cursor");
+		deployedUnitsPanel = GetParent()?.GetNodeOrNull<GameUI>("GameUI")?.DeployedUnitsPanel;
+		if (IsInstanceValid(deployedUnitsPanel))
+		{
+			deployedUnitsPanel.Resized += RefreshLayout;
+		}
 
 		AudioHelpers.RegisterButtons(new Button[] {
 			continueButton,
@@ -122,6 +128,10 @@ public partial class TutorialOverlay : CanvasLayer
 	public override void _ExitTree()
 	{
 		tutorialCursor?.SetPopupCursorOverride(false);
+		if (IsInstanceValid(deployedUnitsPanel))
+		{
+			deployedUnitsPanel.Resized -= RefreshLayout;
+		}
 		if (continueButton != null)
 		{
 			continueButton.Pressed -= OnContinuePressed;
@@ -786,9 +796,14 @@ public partial class TutorialOverlay : CanvasLayer
 		}
 		else if (requestedCalloutPlacement == TutorialCalloutPlacement.TopRight)
 		{
+			float top = ViewportMargin;
+			if (IsInstanceValid(deployedUnitsPanel) && deployedUnitsPanel.IsVisibleInTree())
+			{
+				top = Mathf.Max(top, deployedUnitsPanel.GetGlobalRect().End.Y + ViewportMargin);
+			}
 			position = new Vector2(
 				viewportSize.X - minimumSize.X - ViewportMargin,
-				ViewportMargin);
+				top);
 		}
 		else if (!hasFocus)
 		{

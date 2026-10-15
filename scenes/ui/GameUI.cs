@@ -49,6 +49,7 @@ public partial class GameUI : CanvasLayer
 	public delegate void SendPathToRobotButtonPressedEventHandler();
 	private bool isTimeIsUp = false;
 	private bool isMissionTimerPaused;
+	private bool isMissionTimerEnabled = true;
 	private Timer pauseIndependentMissionTimer;
 	public int TimeToCompleteLevel;
 
@@ -61,11 +62,11 @@ public partial class GameUI : CanvasLayer
 	private Label redOreLabel;
 	private Label greenOreLabel;
 	private Label timeLeftLabel;
+	private Control missionTimerContainer;
 	private Button stopRobotButton;
 	private Button addMaterialButton;
 	private Button displayAnomalyMapButton;
 	private Button sendPathToRobotButton;
-	private Button executePathButton;
 	private Button previewPathButton;
 	private Button configureApiKeyButton;
 	private Button foldButton;
@@ -87,6 +88,7 @@ public partial class GameUI : CanvasLayer
 	private readonly List<TutorialTargetRegistration> staticTutorialTargets = new();
 	private readonly List<TutorialTargetRegistration> deploymentTutorialTargets = new();
 	private readonly List<TutorialTargetRegistration> unitTutorialTargets = new();
+	public Control DeployedUnitsPanel => GetNodeOrNull<Control>("MarginContainer3");
 
 	[Export]
 	private GravitationalAnomalyMap gravitationalAnomalyMap;
@@ -113,6 +115,7 @@ public partial class GameUI : CanvasLayer
 		redOreLabel = GetNode<Label>("%RedOreLabel");
 		greenOreLabel = GetNode<Label>("%GreenOreLabel");
 		timeLeftLabel = GetNode<Label>("%TimeLeftLabel");
+		missionTimerContainer = timeLeftLabel.GetParent<Control>();
 		stopRobotButton = GetNode<Button>("%StopRobotButton");
 		displayAnomalyMapButton = GetNode<Button>("%DisplayAnomalyMapButton");
 		displayTraceButton = GetNode<CheckButton>("%DisplayTraceButton");
@@ -120,7 +123,6 @@ public partial class GameUI : CanvasLayer
 		foldBuildingSectionButton = GetNodeOrNull<Button>("%FoldBuildingSectionButton");
 		specialFunctionsContainer = GetNode<MarginContainer>("%SpecialFunctionsContainer");
 		sendPathButtonPanelContainer = GetNode<PanelContainer>("%SendPathButtonPanelContainer");
-		executePathButton = GetNode<Button>("%ExecutePathButton");
 		adviceLabel = GetNode<Label>("%AdviceLabel");
 		rakePanel = GetNode<Panel>("%RakePanel");
 		sendPathToRobotButton = GetNode<Button>("%SendPathToRobotButton");
@@ -164,7 +166,6 @@ public partial class GameUI : CanvasLayer
 		buildingManager.ClockIsTicking += OnClockIsTicking;
 		displayTraceButton.Toggled += OnDisplayTraceToggled;
 		sendPathToRobotButton.Pressed += OnSendPathToRobotButtonPressed;
-		executePathButton.Pressed += OnExecutePathButtonPressed;
 		if (previewPathButton != null)
 		{
 			previewPathButton.Pressed += OnPreviewPathButtonPressed;
@@ -242,9 +243,6 @@ public partial class GameUI : CanvasLayer
 		staticTutorialTargets.Add(tutorialTargetRegistry.RegisterControl(
 			TutorialTargetIds.AddMaterialButton,
 			addMaterialButton));
-		staticTutorialTargets.Add(tutorialTargetRegistry.RegisterControl(
-			TutorialTargetIds.ExecutePathButton,
-			executePathButton));
 		staticTutorialTargets.Add(tutorialTargetRegistry.RegisterControl(
 			TutorialTargetIds.RakePanel,
 			rakePanel));
@@ -480,13 +478,26 @@ public partial class GameUI : CanvasLayer
 		isTimeIsUp = false;
 	}
 
+	public void SetMissionTimerEnabled(bool enabled)
+	{
+		isMissionTimerEnabled = enabled;
+		if (IsInstanceValid(missionTimerContainer))
+		{
+			missionTimerContainer.Visible = enabled;
+		}
+		if (!enabled)
+		{
+			pauseIndependentMissionTimer?.Stop();
+		}
+	}
+
 	/// <summary>
 	/// Keeps the visible mission countdown running while the scene tree is paused. Presentation
 	/// slides hard-pause gameplay, so their timer needs a pause-independent clock.
 	/// </summary>
 	public void SetMissionTimerRunsWhilePaused(bool enabled)
 	{
-		if (!enabled)
+		if (!enabled || !isMissionTimerEnabled)
 		{
 			pauseIndependentMissionTimer?.Stop();
 			return;
@@ -527,7 +538,8 @@ public partial class GameUI : CanvasLayer
 	private void TickMissionTimer()
 	{
 		bool pauseIndependentTimerActive = pauseIndependentMissionTimer?.IsStopped() == false;
-		if (isTimeIsUp || (isMissionTimerPaused && !pauseIndependentTimerActive))
+		if (!isMissionTimerEnabled || isTimeIsUp ||
+			(isMissionTimerPaused && !pauseIndependentTimerActive))
 		{
 			return;
 		}
@@ -720,6 +732,9 @@ public partial class GameUI : CanvasLayer
 			unitTutorialTargets.Add(tutorialTargetRegistry.RegisterControl(
 				TutorialTargetIds.DeployedRoverBattery,
 				unitSection.BatteryDisplay));
+			unitTutorialTargets.Add(tutorialTargetRegistry.RegisterControl(
+				TutorialTargetIds.DeployedRoverChargingStatus,
+				unitSection.ChargingStatus));
 		}
 	}
 
@@ -1433,7 +1448,7 @@ public partial class GameUI : CanvasLayer
 		}
 	}
 	
-	private void OnExecutePathButtonPressed()
+	public void ExecutePaintedPath()
 	{
 		EmitSignal(nameof(SendPathToRobotButtonPressed));
 		// Get all painted tiles

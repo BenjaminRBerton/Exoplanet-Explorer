@@ -26,6 +26,7 @@ public partial class UnitSection : PanelContainer
 	private Panel panel;
 	public BuildingComponent BuildingComponent => buildingComponent;
 	public Control BatteryDisplay => batteryBar;
+	public Control ChargingStatus => batteryLabel;
 
 	public enum RobotType
 	{

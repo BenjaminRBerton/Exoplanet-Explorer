@@ -47,6 +47,8 @@ public partial class BuildingManager : Node
 	public delegate void NewRobotSelectedEventHandler(BuildingComponent buildingComponent);
 	[Signal]
 	public delegate void NoMoreRobotSelectedEventHandler();
+	[Signal]
+	public delegate void CustomPathModeChangedEventHandler(bool active);
 	public List<Node2D> AliveRobots { get; private set; } = new();
 	/// <summary>
 	/// Persistent team-wide navigation knowledge. Bases, rovers, and drones all
@@ -157,6 +159,13 @@ public partial class BuildingManager : Node
 	public int AvailableMineralCount => currentMineralCount - currentlyUsedMineralCount;
 	public int AvailableMaterialCount => startingMaterialCount + currentMaterialCount - currentlyUsedMaterialCount;
 	public bool IsInPaintingMode => currentState == State.PaintingPath || currentState == State.AnnotatingPath;
+	public bool IsInCustomPathMode => IsCustomPathEditingState(currentState);
+
+	private static bool IsCustomPathEditingState(State state)
+	{
+		return state is State.PaintingPath or State.AnnotatingPath or
+			State.DragRake or State.PressRake or State.DroppedRake;
+	}
 
 	public override void _Ready()
 	{
@@ -2011,7 +2020,11 @@ public partial class BuildingManager : Node
 			}
 			else
 			{
-				FloatingTextManager.ShowMessageAtMousePosition("Cannot find alternative path!");
+				Game.UI.GameUI.PushMessage(
+					"Cannot find alternative path!",
+					"red",
+					true,
+					associatedRobot);
 				// Don't erase if no alternative path exists
 				return;
 			}
@@ -2272,6 +2285,8 @@ public partial class BuildingManager : Node
 
 	private void ChangeState(State toState)
 	{
+		bool wasInCustomPathMode = IsCustomPathEditingState(currentState);
+
 		switch (currentState)
 		{
 			case State.Normal:
@@ -2326,6 +2341,11 @@ public partial class BuildingManager : Node
 		}
 
 		currentState = toState;
+		bool isInCustomPathMode = IsCustomPathEditingState(currentState);
+		if (wasInCustomPathMode != isInCustomPathMode)
+		{
+			EmitSignal(SignalName.CustomPathModeChanged, isInCustomPathMode);
+		}
 
 		switch (currentState)
 		{

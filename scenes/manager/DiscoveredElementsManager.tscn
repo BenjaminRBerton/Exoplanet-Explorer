@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bllsmwyng6v5f"]
+[gd_scene load_steps=19 format=3 uid="uid://bllsmwyng6v5f"]
 
 [ext_resource type="Script" path="res://scenes/manager/DiscoveredElementsManager.cs" id="1_svhsh"]
 [ext_resource type="PackedScene" uid="uid://bl8iq7elbw4og" path="res://scenes/LandscapeElements/DiscoveredElements.tscn" id="2_cjj8q"]
@@ -15,6 +15,9 @@
 [ext_resource type="PackedScene" uid="uid://ctkj7x7qqbjk1" path="res://scenes/LandscapeElements/RedOreScene.tscn" id="12_smkg4"]
 [ext_resource type="PackedScene" uid="uid://kkn3b22q1ucy" path="res://scenes/LandscapeElements/BlueOreScene.tscn" id="13_s0k2f"]
 [ext_resource type="PackedScene" uid="uid://cx8br5unsto1x" path="res://scenes/LandscapeElements/GreenOreScene.tscn" id="14_lqtf2"]
+[ext_resource type="PackedScene" path="res://scenes/LandscapeElements/RedOreCollectedScene.tscn" id="15_red_collected"]
+[ext_resource type="PackedScene" path="res://scenes/LandscapeElements/BlueOreCollectedScene.tscn" id="16_blue_collected"]
+[ext_resource type="PackedScene" path="res://scenes/LandscapeElements/GreenOreCollectedScene.tscn" id="17_green_collected"]
 
 [node name="DiscoveredElementsManager" type="Node"]
 script = ExtResource("1_svhsh")
@@ -32,3 +35,6 @@ bigRockScene = ExtResource("11_q0kr6")
 redOreScene = ExtResource("12_smkg4")
 blueOreScene = ExtResource("13_s0k2f")
 greenOreScene = ExtResource("14_lqtf2")
+redOreCollectedScene = ExtResource("15_red_collected")
+blueOreCollectedScene = ExtResource("16_blue_collected")
+greenOreCollectedScene = ExtResource("17_green_collected")

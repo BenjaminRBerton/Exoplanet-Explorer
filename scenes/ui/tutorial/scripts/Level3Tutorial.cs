@@ -110,7 +110,7 @@ public sealed class Level3Tutorial : TutorialScript
 
 		tutorial.Step("level3.execute-path")
 			.Say("EXECUTE THE PATH", "Press Execute Path when the route reaches the fragment's analysis range.")
-			.PointTo(TutorialTargetIds.ExecutePathButton).GuideAction().UndimBackground()
+			.PointTo(TutorialTargetIds.StartExplorationButton).GuideAction().UndimBackground()
 			.Until(TutorialEvent.CustomPathExecuted, IsRover);
 
 		tutorial.Step("level3.analyse-sample")
@@ -142,6 +142,12 @@ public sealed class Level3Tutorial : TutorialScript
 			.UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopLeft)
 			.Until(TutorialEvent.FragmentGlyphRevealed);
+
+		tutorial.Step("level3.processing-complete")
+			.Say("GLYPH REVEALED",
+				"You found the correct combination of processing filters and observation channels, revealing the hidden glyph. The second step is to determine its upright orientation. Press Continue when you are ready.")
+			.HardPause()
+			.UntilContinue();
 
 		tutorial.Step("level3.rotate-glyph")
 			.Say("FIND THE UPRIGHT ORIENTATION",

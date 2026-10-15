@@ -60,7 +60,7 @@ layout_mode = 2
 
 [node name="StatusSummary" type="VBoxContainer" parent="Margin/PanelScroll/Content"]
 clip_contents = true
-custom_minimum_size = Vector2(0, 184)
+custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 theme_override_constants/separation = 3
 
@@ -87,27 +87,6 @@ text = "NEXT: Select Supporter or Performer"
 autowrap_mode = 2
 max_lines_visible = 2
 
-[node name="MetricsSeparator" type="HSeparator" parent="Margin/PanelScroll/Content/StatusSummary"]
-layout_mode = 2
-
-[node name="TargetMetricsLabel" type="Label" parent="Margin/PanelScroll/Content/StatusSummary"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Observable ratio from 0.00 to 1.00. 1.00 means every retained detected feature is fully visible and all visible regional geometry is accounted for; it does not verify the true glyph."
-theme_override_font_sizes/font_size = 12
-text = "SELECTED REGION SIGNAL / NOISE: Select a region"
-autowrap_mode = 2
-max_lines_visible = 1
-
-[node name="ProcessingEffectLabel" type="Label" parent="Margin/PanelScroll/Content/StatusSummary"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Compares the latest measured signal/noise ratio with the preceding tested configuration. It is not a claim about the hidden solution."
-theme_override_font_sizes/font_size = 12
-text = "MEASURED CHANGE: BASELINE"
-autowrap_mode = 2
-max_lines_visible = 1
-
 [node name="RegionSeparator" type="HSeparator" parent="Margin/PanelScroll/Content"]
 layout_mode = 2
 
@@ -126,7 +105,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Generate dense regions of interest from current observable features."
-text = "GENERATE REGIONS"
+text = "ROVER PROPOSE REGION"
 
 [node name="ShowRegionOverlayButton" type="CheckButton" parent="Margin/PanelScroll/Content/RegionActions"]
 unique_name_in_owner = true
@@ -167,7 +146,7 @@ text = "REJECT"
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Arm one drag on the scan to add a player-defined region."
-text = "DRAW REGION"
+text = "MANUALLY PROPOSE REGION"
 
 [node name="RegionViewLockButton" type="Button" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true
@@ -176,34 +155,6 @@ size_flags_horizontal = 3
 tooltip_text = "Lock or unlock the selected accepted region's captured view. Locked regions cannot be resized."
 disabled = true
 text = "LOCK"
-
-[node name="NavigationIntentLabel" type="Label" parent="Margin/PanelScroll/Content"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-text = "NAVIGATION: Select a region"
-autowrap_mode = 2
-
-[node name="NavigationActions" type="HBoxContainer" parent="Margin/PanelScroll/Content"]
-visible = false
-layout_mode = 2
-alignment = 1
-
-[node name="NavigateToRegionButton" type="Button" parent="Margin/PanelScroll/Content/NavigationActions"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-tooltip_text = "Approve navigation to the previewed region."
-disabled = true
-text = "GO"
-
-[node name="CancelNavigationButton" type="Button" parent="Margin/PanelScroll/Content/NavigationActions"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-tooltip_text = "Cancel navigation and pause autonomy."
-disabled = true
-text = "CANCEL"
 
 [node name="FeatureSeparator" type="HSeparator" parent="Margin/PanelScroll/Content"]
 layout_mode = 2
@@ -225,7 +176,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Run deterministic detection on the current observable scan."
-text = "SCAN FEATURES"
+text = "ROVER SCAN FEATURES"
 
 [node name="ShowFeatureOverlayButton" type="CheckButton" parent="Margin/PanelScroll/Content/FeatureActions"]
 unique_name_in_owner = true
@@ -293,7 +244,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Group connected observable features into candidate reconstructed structures."
-text = "SCAN STRUCTURES"
+text = "ROVER SCAN STRUCTURES"
 
 [node name="ShowStructureOverlayButton" type="CheckButton" parent="Margin/PanelScroll/Content/StructureActions"]
 unique_name_in_owner = true
@@ -301,13 +252,6 @@ layout_mode = 2
 tooltip_text = "Show or hide reconstructed-structure annotations."
 button_pressed = true
 text = "OVERLAY"
-
-[node name="SelectedStructureLabel" type="Label" parent="Margin/PanelScroll/Content"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-text = "STRUCTURE: None selected"
-autowrap_mode = 2
 
 [node name="StructureSelector" type="OptionButton" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true
@@ -327,13 +271,13 @@ unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Accept this reconstructed structure for later analysis. This does not declare it correct."
 disabled = true
-text = "ACCEPT"
+text = "VALIDATE STRUCTURE"
 
 [node name="DismissStructureButton" type="Button" parent="Margin/PanelScroll/Content/StructureDispositionEdits"]
 unique_name_in_owner = true
 layout_mode = 2
 disabled = true
-text = "REJECT"
+text = "REJECT STRUCTURE"
 
 [node name="OrientationSeparator" type="HSeparator" parent="Margin/PanelScroll/Content"]
 layout_mode = 2
@@ -383,7 +327,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Estimate five possible upright rotations from the selected region's visible structure geometry."
-text = "ESTIMATE ROTATIONS"
+text = "ROVER PROPOSE ROTATION"
 
 [node name="ShowOrientationOverlayButton" type="CheckButton" parent="Margin/PanelScroll/Content/OrientationActions"]
 unique_name_in_owner = true
@@ -399,13 +343,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Close orientation isolation and side-by-side comparison, returning to the normal fragment view."
 text = "QUIT ROTATION VIEW"
-
-[node name="SelectedOrientationLabel" type="Label" parent="Margin/PanelScroll/Content"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-text = "ROTATION: Select a candidate structure"
-autowrap_mode = 2
 
 [node name="OrientationSelector" type="OptionButton" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true
@@ -454,7 +391,7 @@ layout_mode = 2
 [node name="ArrowTitle" type="Button" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "▶ ARROW & DIRECTION"
+text = "▶ ARROW"
 flat = true
 alignment = 0
 
@@ -468,20 +405,13 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "Find arrow-shaped candidates from the visible geometry."
-text = "DETECT ARROWS"
+text = "ROVER DETECT ARROW"
 
 [node name="ShowArrowOverlayButton" type="CheckButton" parent="Margin/PanelScroll/Content/ArrowActions"]
 unique_name_in_owner = true
 layout_mode = 2
 button_pressed = true
 text = "OVERLAY"
-
-[node name="ArrowLabel" type="Label" parent="Margin/PanelScroll/Content"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-text = "ARROW: No candidates"
-autowrap_mode = 2
 
 [node name="ArrowSelector" type="OptionButton" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true
@@ -534,13 +464,13 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ACCEPT"
+text = "ACCEPT ARROW"
 
 [node name="RejectArrowButton" type="Button" parent="Margin/PanelScroll/Content/ArrowEdits"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "REJECT"
+text = "REJECT ARROW"
 
 [node name="DirectionActions" type="HBoxContainer" parent="Margin/PanelScroll/Content"]
 unique_name_in_owner = true

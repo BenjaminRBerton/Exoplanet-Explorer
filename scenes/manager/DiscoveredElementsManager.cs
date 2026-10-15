@@ -40,6 +40,12 @@ public partial class DiscoveredElementsManager : Node
 	[Export]
 	private PackedScene greenOreScene;
 	[Export]
+	private PackedScene redOreCollectedScene;
+	[Export]
+	private PackedScene blueOreCollectedScene;
+	[Export]
+	private PackedScene greenOreCollectedScene;
+	[Export]
 	private TileMapLayer cloudLayer;
 	private Dictionary<Vector2I, Node2D> tileToDiscoveredElements = new();
 	private Dictionary<Vector2I, DiscoveredElements> tiletoDarkenedElements = new();
@@ -55,7 +61,7 @@ public partial class DiscoveredElementsManager : Node
 	{
 		gridManager.DiscoveredTileUpdated += OnDiscoveredTileUpdated;
 		gridManager.ResourceTilesUpdated += OnResourceTilesUpdated;
-		//gridManager.MineralTilesUpdated += OnResourceTilesUpdated;
+		gridManager.MineralTilesUpdated += OnResourceTilesUpdated;
 		gridManager.GridStateUpdated += OnGridStateUpdated;
 		discoveredElements = DiscoveredElementsScene.Instantiate<DiscoveredElements>();
 		AddChild(discoveredElements);
@@ -67,10 +73,15 @@ public partial class DiscoveredElementsManager : Node
 		switch (resourceType)
 		{
 			case "red_ore":
+				UpdateIndicators(tile, "red_ore_collected");
+				break;
 			case "blue_ore":
+				UpdateIndicators(tile, "blue_ore_collected");
+				break;
 			case "green_ore":
+				UpdateIndicators(tile, "green_ore_collected");
+				break;
 			case "wood":
-				// Switch the indicators to TrunkElement
 				UpdateIndicators(tile, "trunk");
 				break;
 		}
@@ -129,12 +140,14 @@ public partial class DiscoveredElementsManager : Node
 	{
 		using (Telemetry.Scope("DiscoveredElementsManager.UpdateIndicators"))
 		{
-		if (displayedElementTiles.Contains(tile) && type != "trunk") return;
+		bool isCollectedResource = type is "trunk" or
+			"red_ore_collected" or "blue_ore_collected" or "green_ore_collected";
+		if (displayedElementTiles.Contains(tile) && !isCollectedResource) return;
 
-		// A trunk replaces the element already displayed on this tile. This must
+		// A collected resource replaces the element already displayed on this tile. This must
 		// happen before tileToDiscoveredElements[tile] is assigned to the new
-		// holder, otherwise we lose the reference to the holder containing the tree.
-		if (type == "trunk" && tileToDiscoveredElements.TryGetValue(tile, out var existingElement))
+		// holder, otherwise we lose the reference to the original tree or ore deposit.
+		if (isCollectedResource && tileToDiscoveredElements.TryGetValue(tile, out var existingElement))
 		{
 			if (IsInstanceValid(existingElement))
 			{
@@ -155,7 +168,7 @@ public partial class DiscoveredElementsManager : Node
 			return;
 		}
 
-		var elementNode2D = type == "trunk"
+		var elementNode2D = isCollectedResource
 			? discoveredElements.GetNode<Node2D>("%GroundElementNode2D")
 			: discoveredElements.GetNode<Node2D>("%ElementNode2D");
 
@@ -218,6 +231,18 @@ public partial class DiscoveredElementsManager : Node
 				break;
 			case "green_ore":
 				elementScene = greenOreScene.Instantiate<Sprite2D>();
+				elementHolder.AddChild(elementScene);
+				break;
+			case "red_ore_collected":
+				elementScene = redOreCollectedScene.Instantiate<Sprite2D>();
+				elementHolder.AddChild(elementScene);
+				break;
+			case "blue_ore_collected":
+				elementScene = blueOreCollectedScene.Instantiate<Sprite2D>();
+				elementHolder.AddChild(elementScene);
+				break;
+			case "green_ore_collected":
+				elementScene = greenOreCollectedScene.Instantiate<Sprite2D>();
 				elementHolder.AddChild(elementScene);
 				break;
 		}

@@ -1087,6 +1087,7 @@ public partial class GridManager : Node
 
 	private void UpdateCollectedMineralTiles(BuildingComponent buildingComponent, bool emitGridStateUpdated = true)
 	{
+		if (buildingComponent.IsLifted) return;
 		var tileArea = buildingComponent.GetTileArea();
 		var mineralTilesWithType = GetMineralTilesInRadiusWithType(tileArea, buildingComponent.BuildingResource.ResourceRadius);
 

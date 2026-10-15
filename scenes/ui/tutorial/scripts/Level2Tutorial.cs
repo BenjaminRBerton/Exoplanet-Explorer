@@ -24,6 +24,19 @@ public sealed class Level2Tutorial : TutorialScript
 	private static bool IsRover(TutorialEventContext eventContext) => IsRobot(eventContext, "Rover");
 	private static bool IsDrone(TutorialEventContext eventContext) => IsRobot(eventContext, "Drone");
 
+	private static bool DroneReachedRoverLiftPosition(TutorialEventContext eventContext)
+	{
+		if (!IsDrone(eventContext) || eventContext.Subject is not BuildingComponent drone ||
+			!eventContext.WorldPosition.HasValue)
+		{
+			return false;
+		}
+
+		BuildingComponent rover = drone.gridManager?.GetRobotAtPosition(
+			eventContext.WorldPosition.Value + Vector2I.Down);
+		return GodotObject.IsInstanceValid(rover) && rover.BuildingResource?.DisplayName == "Rover";
+	}
+
 	private static bool RoverCarriesThreeMineralTypes(TutorialEventContext eventContext)
 	{
 		if (!IsRover(eventContext) || eventContext.Subject is not BuildingComponent rover) return false;
@@ -135,8 +148,16 @@ public sealed class Level2Tutorial : TutorialScript
 			.Until(TutorialEvent.RobotSelected, IsDrone);
 
 		tutorial.Step("level2.position-and-lift")
+			.Say("POSITION THE DRONE",
+				"Move the drone onto the highlighted tile directly north of the rover.")
+			.PointTo(TutorialTargetIds.RoverLiftPosition)
+			.GuideAction().UndimBackground()
+			.PlaceCallout(TutorialCalloutPlacement.TopRight)
+			.Until(TutorialEvent.RobotMoved, DroneReachedRoverLiftPosition);
+
+		tutorial.Step("level2.lift-rover")
 			.Say("LIFT THE ROVER",
-				"Move the drone directly above the rover. When the lift control becomes available, press Lift Robot to attach the rover beneath the drone.")
+				"The drone is in position. Press Lift Robot to attach the rover beneath the drone.")
 			.PointTo(TutorialTargetIds.LiftRobotButton)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)

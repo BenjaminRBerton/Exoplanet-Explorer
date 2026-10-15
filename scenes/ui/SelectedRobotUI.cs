@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using Game.Autoload;
 using Game.Component;
+using Game.Manager;
 using Game.Resources.Building;
 using Game.UI.Tutorial;
 using Godot;
@@ -54,6 +55,7 @@ public partial class SelectedRobotUI : CanvasLayer
 	private readonly List<FragmentSampleAvailability> nearbyFragmentSamples = new();
 	private Vector2I? selectedFragmentSample;
 	private BaseLevel baseLevel;
+	private BuildingManager buildingManager;
 
 	private MultiPurposeButtonState currentButtonState;
 	private bool signalsDisconnected;
@@ -265,6 +267,11 @@ public partial class SelectedRobotUI : CanvasLayer
 		if (baseLevel != null)
 		{
 			baseLevel.FragmentAnalysisStatusChanged += OnFragmentAnalysisStatusChanged;
+			buildingManager = baseLevel.GetNodeOrNull<BuildingManager>("BuildingManager");
+			if (buildingManager != null)
+			{
+				buildingManager.CustomPathModeChanged += OnCustomPathModeChanged;
+			}
 		}
 		selectedBuildingComponent.ModeChanged += OnModeChanged;
 		InitializeUI();
@@ -326,6 +333,7 @@ public partial class SelectedRobotUI : CanvasLayer
 		stopExplorbutton = GetNode<Button>("%StopExplorButton");
 		trackRobotButton = GetNode<Button>("%TrackRobotButton");
 		startExplorButton = GetNode<Button>("%StartExplorButton");
+		UpdateStartExplorationButton(buildingManager?.IsInCustomPathMode == true);
 		customPathButton = GetNode<Button>("%CustomPathButton");
 		placeBridgeButton = GetNode<Button>("%PlaceBridgeButton");
 		liftRobotButton = GetNode<Button>("%LiftRobotButton");
@@ -603,6 +611,12 @@ public partial class SelectedRobotUI : CanvasLayer
 
 	private void OnStartExplorButtonSelected()
 	{
+		if (buildingManager?.IsInCustomPathMode == true)
+		{
+			GameUI.Instance?.ExecutePaintedPath();
+			return;
+		}
+
 		GameEvents.EmitExplorationStarted(selectedBuildingComponent, currentexplorMode.ToString());
 		if (currentexplorMode == ExplorMode.None && selectedBuildingComponent.BuildingResource.IsAerial)
 		{
@@ -624,6 +638,19 @@ public partial class SelectedRobotUI : CanvasLayer
 	private void OnCustomPathButtonPressed()
 	{
 		GameEvents.EmitCustomPathRequested(selectedBuildingComponent);
+	}
+
+	private void OnCustomPathModeChanged(bool active)
+	{
+		UpdateStartExplorationButton(active);
+	}
+
+	private void UpdateStartExplorationButton(bool customPathModeActive)
+	{
+		if (IsInstanceValid(startExplorButton))
+		{
+			startExplorButton.Text = customPathModeActive ? "Execute Path" : "Start Exploration";
+		}
 	}
 
 	private void OnTrackRobotButtonPressed()
@@ -956,6 +983,10 @@ public partial class SelectedRobotUI : CanvasLayer
 		if (baseLevel != null)
 		{
 			baseLevel.FragmentAnalysisStatusChanged -= OnFragmentAnalysisStatusChanged;
+		}
+		if (buildingManager != null)
+		{
+			buildingManager.CustomPathModeChanged -= OnCustomPathModeChanged;
 		}
 		if (selectedBuildingComponent != null)
 		{

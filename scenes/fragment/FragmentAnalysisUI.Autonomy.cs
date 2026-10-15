@@ -7,6 +7,8 @@ using Game.Autoload;
 public partial class FragmentAnalysisUI
 {
 	private const float AngularSpinBoxMinimumHeight = 48f;
+	private const string ManuallyProposeRegionText = "MANUALLY PROPOSE REGION";
+	private const string CancelRegionProposalText = "CANCEL PROPOSAL";
 
     [Export]
     private FragmentAutonomySettings autonomySettings = new();
@@ -74,11 +76,6 @@ public partial class FragmentAnalysisUI
 	private Button acceptRegionButton;
 	private Button dismissRegionButton;
 	private Button restoreRegionButton;
-	private Label navigationIntentLabel;
-	private Button navigateToRegionButton;
-	private Button cancelNavigationButton;
-	private Label targetMetricsLabel;
-	private Label processingEffectLabel;
 	private OptionButton processingHistorySelector;
 	private Button restoreProcessingConfigurationButton;
 	private CheckButton bookmarkProcessingConfigurationButton;
@@ -112,7 +109,6 @@ public partial class FragmentAnalysisUI
 	private Control orientationActions;
 	private Button estimateOrientationButton;
 	private CheckButton showOrientationOverlayButton;
-	private Label selectedOrientationLabel;
 	private OptionButton orientationSelector;
 	private Control orientationEdits;
 	private Button previousOrientationButton;
@@ -134,7 +130,6 @@ public partial class FragmentAnalysisUI
 	private Control arrowActions;
 	private Button detectArrowsButton;
 	private CheckButton showArrowOverlayButton;
-	private Label arrowLabel;
 	private OptionButton arrowSelector;
 	private Control arrowNavigation;
 	private Button previousArrowButton;
@@ -153,7 +148,6 @@ public partial class FragmentAnalysisUI
 	private FragmentDirectionInset directionInset;
 	private Button scanStructuresButton;
 	private CheckButton showStructureOverlayButton;
-	private Label selectedStructureLabel;
 	private OptionButton structureSelector;
 	private Button acceptStructureButton;
 	private Button dismissStructureButton;
@@ -162,7 +156,6 @@ public partial class FragmentAnalysisUI
 	private Control candidateRegionActions;
 	private Control candidateRegionEdits;
 	private Button regionViewLockButton;
-	private Control navigationActions;
 	private Control regionSequenceActions;
 	private Control featureSensingActions;
 	private Control featureEdits;
@@ -253,6 +246,7 @@ public partial class FragmentAnalysisUI
 			autonomySettings.PendingFeatureColor);
 		regionSequenceView.RegionSelected += OnSequenceRegionSelected;
 		regionSequenceView.RegionActionRequested += OnSequenceRegionActionRequested;
+		regionSequenceView.FeatureActionRequested += OnFeatureActionRequested;
 		regionSequenceView.RegionLockRequested += OnSequenceRegionLockRequested;
 		regionSequenceView.PageChanged += OnRegionSequencePageChanged;
 		regionSequenceView.ExitRequested += OnSequenceExitRequested;
@@ -364,13 +358,18 @@ public partial class FragmentAnalysisUI
         header.AddChild(roverPanelToggleButton);
         header.MoveChild(roverPanelToggleButton, quitIndex + 5);
 
-		// COMPARE REGIONS button is now inside the candidate-regions section in the rover panel,
-		// placed next to GENERATE REGIONS. Create it here and move it programmatically after the
+		// Rotation comparison is a viewport-level mode, so expose its view/quit
+		// control in the analyzer header instead of the Rotation submenu.
+		quitOrientationViewButton.Reparent(header);
+		header.MoveChild(quitOrientationViewButton, quitIndex + 6);
+
+		// COMPARE REGIONS button is inside the candidate-regions section in the rover panel,
+		// placed next to ROVER PROPOSE REGION. Create it here after the
 		// panel is visible.
 		comparisonOpenButton = new Button
 		{
 			Name = "ComparisonOpenButton",
-			Text = "COMPARE",
+			Text = "COMPARE REGIONS",
 			TooltipText = "Open the side-by-side accepted-region comparison.",
 			Disabled = true
 		};
@@ -419,8 +418,6 @@ public partial class FragmentAnalysisUI
 		roverActivityLabel = roverPanel.GetNode<Label>("%RoverActivityLabel");
 		roverCurrentActionLabel = roverPanel.GetNode<Label>("%RoverCurrentActionLabel");
 		roverNextActionLabel = roverPanel.GetNode<Label>("%RoverNextActionLabel");
-		targetMetricsLabel = roverPanel.GetNode<Label>("%TargetMetricsLabel");
-		processingEffectLabel = roverPanel.GetNode<Label>("%ProcessingEffectLabel");
 		roverTargetLabel = null; // removed from panel
 		roverPanelScroll = roverPanel.GetNode<ScrollContainer>("Margin/PanelScroll");
 		historyBackButton = roverPanel.GetNode<Button>("%HistoryBackButton");
@@ -468,7 +465,6 @@ public partial class FragmentAnalysisUI
 		nextOrientationRegionButton = roverPanel.GetNode<Button>("%NextOrientationRegionButton");
 		estimateOrientationButton = roverPanel.GetNode<Button>("%EstimateOrientationButton");
 		showOrientationOverlayButton = roverPanel.GetNode<CheckButton>("%ShowOrientationOverlayButton");
-		selectedOrientationLabel = roverPanel.GetNode<Label>("%SelectedOrientationLabel");
 		orientationSelector = roverPanel.GetNode<OptionButton>("%OrientationSelector");
 		previousOrientationButton = roverPanel.GetNode<Button>("%PreviousOrientationButton");
 		orientationStepLabel = roverPanel.GetNode<Label>("%OrientationStepLabel");
@@ -482,12 +478,11 @@ public partial class FragmentAnalysisUI
 		correctionSectionButton = null;
 		CreateCorrectionControls(roverPanel.GetNode<VBoxContainer>("Margin/PanelScroll/Content"), orientationEdits);
 
-		// ARROW & DIRECTION section (merged); ArrowTitle is now the shared section header.
+		// Arrow review and its resulting direction visualization share this section.
 		arrowSectionButton = roverPanel.GetNode<Button>("%ArrowTitle");
 		arrowActions = roverPanel.GetNode<Control>("%ArrowActions");
 		detectArrowsButton = roverPanel.GetNode<Button>("%DetectArrowsButton");
 		showArrowOverlayButton = roverPanel.GetNode<CheckButton>("%ShowArrowOverlayButton");
-		arrowLabel = roverPanel.GetNode<Label>("%ArrowLabel");
 		arrowSelector = roverPanel.GetNode<OptionButton>("%ArrowSelector");
 		arrowNavigation = roverPanel.GetNode<Control>("%ArrowNavigation");
 		previousArrowButton = roverPanel.GetNode<Button>("%PreviousArrowButton");
@@ -517,10 +512,6 @@ public partial class FragmentAnalysisUI
 		regionViewLockButton = roverPanel.GetNode<Button>("%RegionViewLockButton");
 		candidateRegionActions = groupRegionsButton.GetParent<Control>();
 		candidateRegionEdits = acceptRegionButton.GetParent<Control>();
-		navigationIntentLabel = roverPanel.GetNode<Label>("%NavigationIntentLabel");
-		navigateToRegionButton = roverPanel.GetNode<Button>("%NavigateToRegionButton");
-		cancelNavigationButton = roverPanel.GetNode<Button>("%CancelNavigationButton");
-		navigationActions = navigateToRegionButton.GetParent<Control>();
 		scanFeaturesButton = roverPanel.GetNode<Button>("%ScanFeaturesButton");
 		featureSideBySideButton = roverPanel.GetNode<Button>("%ViewRegionsSideBySideButton");
 		showFeatureOverlayButton = roverPanel.GetNode<CheckButton>("%ShowFeatureOverlayButton");
@@ -533,7 +524,6 @@ public partial class FragmentAnalysisUI
 		featureEdits = acceptFeatureButton.GetParent<Control>();
 		scanStructuresButton = roverPanel.GetNode<Button>("%ScanStructuresButton");
 		showStructureOverlayButton = roverPanel.GetNode<CheckButton>("%ShowStructureOverlayButton");
-		selectedStructureLabel = roverPanel.GetNode<Label>("%SelectedStructureLabel");
 		structureSelector = roverPanel.GetNode<OptionButton>("%StructureSelector");
 		acceptStructureButton = roverPanel.GetNode<Button>("%AcceptStructureButton");
 		dismissStructureButton = roverPanel.GetNode<Button>("%DismissStructureButton");
@@ -805,7 +795,7 @@ public partial class FragmentAnalysisUI
 		acceptCorrectionButton = new Button
 		{
 			Name = "AcceptCorrectionButton",
-			Text = "START ROTATION",
+			Text = "VALIDATE ROTATION",
 			Disabled = true,
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 			TooltipText = "Preview and execute this signed correction. Use again to cancel at current angle."
@@ -813,7 +803,7 @@ public partial class FragmentAnalysisUI
 		rejectCorrectionButton = new Button
 		{
 			Name = "RejectCorrectionButton",
-			Text = "REJECT",
+			Text = "REJECT ROTATION",
 			Disabled = true,
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
 		};
@@ -965,6 +955,8 @@ public partial class FragmentAnalysisUI
 		fragmentRoverOverlay.RegionResized += OnRegionResized;
 		fragmentRoverOverlay.RegionDeleteRequested += OnRegionDeleteRequested;
 		fragmentRoverOverlay.RegionLockRequested += OnOverlayRegionLockRequested;
+		fragmentRoverOverlay.RegionActionRequested += OnOverlayRegionActionRequested;
+		fragmentRoverOverlay.FeatureActionRequested += OnFeatureActionRequested;
 		fragmentRoverOverlay.StructureEditRequested += OnStructureEditRequested;
 		fragmentRoverOverlay.StructureValidateRequested += OnStructureValidateRequested;
 		fragmentRoverOverlay.StructureFeatureToggled += OnStructureFeatureToggled;
@@ -1024,8 +1016,6 @@ public partial class FragmentAnalysisUI
 		if (restoreRegionButton != null) restoreRegionButton.Pressed += OnRestoreRegionPressed;
 		addRegionButton.Pressed += OnAddRegionPressed;
 		regionViewLockButton.Pressed += OnRegionViewLockPressed;
-		navigateToRegionButton.Pressed += OnNavigateToRegionPressed;
-		cancelNavigationButton.Pressed += OnCancelNavigationPressed;
 		if (regionSequenceButton != null) regionSequenceButton.Toggled += OnRegionSequenceToggled;
 		if (previousRegionPairButton != null) previousRegionPairButton.Pressed += OnPreviousRegionPairPressed;
 		if (nextRegionPairButton != null) nextRegionPairButton.Pressed += OnNextRegionPairPressed;
@@ -1107,6 +1097,8 @@ public partial class FragmentAnalysisUI
 		fragmentRoverOverlay.RegionResized -= OnRegionResized;
 		fragmentRoverOverlay.RegionDeleteRequested -= OnRegionDeleteRequested;
 		fragmentRoverOverlay.RegionLockRequested -= OnOverlayRegionLockRequested;
+		fragmentRoverOverlay.RegionActionRequested -= OnOverlayRegionActionRequested;
+		fragmentRoverOverlay.FeatureActionRequested -= OnFeatureActionRequested;
 		fragmentRoverOverlay.StructureEditRequested -= OnStructureEditRequested;
 		fragmentRoverOverlay.StructureValidateRequested -= OnStructureValidateRequested;
 		fragmentRoverOverlay.StructureFeatureToggled -= OnStructureFeatureToggled;
@@ -1166,8 +1158,6 @@ public partial class FragmentAnalysisUI
 		if (restoreRegionButton != null) restoreRegionButton.Pressed -= OnRestoreRegionPressed;
 		addRegionButton.Pressed -= OnAddRegionPressed;
 		regionViewLockButton.Pressed -= OnRegionViewLockPressed;
-		navigateToRegionButton.Pressed -= OnNavigateToRegionPressed;
-		cancelNavigationButton.Pressed -= OnCancelNavigationPressed;
 		if (regionSequenceButton != null) regionSequenceButton.Toggled -= OnRegionSequenceToggled;
 		if (previousRegionPairButton != null) previousRegionPairButton.Pressed -= OnPreviousRegionPairPressed;
 		if (nextRegionPairButton != null) nextRegionPairButton.Pressed -= OnNextRegionPairPressed;
@@ -1766,11 +1756,6 @@ public void DispatchAnalysisConfiguration(
 
 		FragmentOrientationHypothesis selected = state.OrientationHypotheses.Find(hypothesis =>
 			hypothesis.Id == selectedId);
-		FragmentCandidateRegion source = state.SelectedRegionId is int regionId
-			? state.CandidateRegions.Find(region =>
-				region.Id == regionId &&
-				region.Disposition != FragmentAnnotationDisposition.Dismissed)
-			: null;
 		FragmentAutonomyMode mode = fragmentAnalysisRover.GetEffectiveMode(
 			FragmentAutonomyCapability.InterpretUprightOrientation);
 		fragmentRoverOverlay.SetShowOrientations(
@@ -1780,18 +1765,12 @@ public void DispatchAnalysisConfiguration(
 		estimateOrientationButton.Disabled = false;
 		if (selected == null)
 		{
-			selectedOrientationLabel.Text = source == null
-					? "ROTATION: Select a comparison region"
-				: "ROTATION: No alternatives estimated";
 			acceptOrientationButton.Disabled = true;
 			previousOrientationButton.Disabled = true;
 			nextOrientationButton.Disabled = true;
 			orientationStepLabel.Text = "ROT—";
 			return;
 		}
-		selectedOrientationLabel.Text =
-			$"ROT{selected.Id}: {selected.AxisDegrees:+0.0;-0.0;0.0}° · " +
-			FormatOrientationDisposition(selected.Disposition);
 		orientationStepLabel.Text = $"ROT{selected.Id}";
 		bool hasAlternatives = state.OrientationHypotheses.Count > 1;
 		previousOrientationButton.Disabled = !hasAlternatives;
@@ -1824,7 +1803,7 @@ public void DispatchAnalysisConfiguration(
 				: "RECALCULATE CORRECTION";
 		acceptCorrectionButton.Text = fragmentAnalysisRover.IsRotationInProgress
 			? "CANCEL ROTATION"
-			: "START ROTATION";
+			: "VALIDATE ROTATION";
 
 		isSyncingCorrection = true;
 		try
@@ -1971,7 +1950,6 @@ public void DispatchAnalysisConfiguration(
 		nextArrowButton.Disabled = !hasAlternatives;
 		if (selected == null)
 		{
-			arrowLabel.Text = "ARROW: No candidates; detect or use manual drawing";
 			arrowStepLabel.Text = "A—";
 			acceptArrowButton.Disabled = true;
 			rejectArrowButton.Disabled = true;
@@ -1979,9 +1957,6 @@ public void DispatchAnalysisConfiguration(
 				restoreArrowButton.Disabled = true;
 			return;
 		}
-		string sourceLabel = selected.IsPlayerDefined ? "PLAYER-DRAWN" : "GEOMETRY-ONLY ROVER";
-		arrowLabel.Text = $"A{selected.Id}: {sourceLabel} · " +
-			selected.Disposition.ToString().ToUpperInvariant();
 		arrowStepLabel.Text = $"A{selected.Id}";
 		acceptArrowButton.Disabled = selected.Disposition == FragmentAnnotationDisposition.Accepted;
 		rejectArrowButton.Disabled = selected.Disposition == FragmentAnnotationDisposition.Dismissed;
@@ -2087,7 +2062,7 @@ public void DispatchAnalysisConfiguration(
 		showStructureOverlayButton.ButtonPressed = true;
 		showFeatureOverlayButton.ButtonPressed = true;
 		fragmentRoverOverlay.SetRegionDrawingArmed(false);
-		addRegionButton.Text = "DRAW REGION";
+		addRegionButton.Text = ManuallyProposeRegionText;
 		fragmentRoverOverlay.SetStructureEditing(true, structureId, regionId);
 		SetStructureSectionExpanded(true);
 		RefreshStructureControls();
@@ -2170,9 +2145,8 @@ public void DispatchAnalysisConfiguration(
 		FragmentAutonomyState state = fragmentAnalysisRover.State;
 		bool autonomousStructureGate = fragmentAnalysisRover.AutonomousWorkflowStage ==
 			FragmentAutonomousWorkflowStage.AwaitingStructureReview;
-		acceptStructureButton.Text = autonomousStructureGate
-			? "VALIDATE & CONTINUE"
-			: "ACCEPT";
+		acceptStructureButton.Text = "VALIDATE STRUCTURE";
+		dismissStructureButton.Text = "REJECT STRUCTURE";
 		bool includeRover = AreRoverStructuresVisible();
 		int selectedId = state.SelectedStructureId ?? -1;
 		isSyncingStructureSelector = true;
@@ -2203,7 +2177,6 @@ public void DispatchAnalysisConfiguration(
 
 		if (selected == null)
 		{
-			selectedStructureLabel.Text = "STRUCTURE: None selected";
 			acceptStructureButton.Disabled = true;
 			dismissStructureButton.Disabled = true;
 			if (IsInstanceValid(restoreStructureButton))
@@ -2213,14 +2186,6 @@ public void DispatchAnalysisConfiguration(
 		{
 			bool canEditOnCurrentPage =
 				fragmentAnalysisRover.CanEditStructureOnCurrentReviewPage(selected.Id);
-			selectedStructureLabel.Text =
-				$"STRUCTURE {selected.Id}: " +
-				$"{selected.Provenance.ToString().ToUpperInvariant()} · " +
-				$"{FragmentCandidateValidityPolicy.DescribeStructureDisposition(selected.Disposition)} · " +
-				$"{selected.FeatureIds.Count} FEATURES" +
-				(fragmentRoverOverlay.IsStructureEditing
-					? "\nEDIT: click to add/select · Delete removes · drag draws a stroke"
-					: string.Empty);
 			acceptStructureButton.Disabled =
 				!canEditOnCurrentPage ||
 				(!autonomousStructureGate &&
@@ -2268,30 +2233,27 @@ public void DispatchAnalysisConfiguration(
 		FragmentCandidateRegion region = fragmentAnalysisRover.State?.CandidateRegions.Find(
 			candidate => candidate.Id == regionId);
 		if (region == null) return;
-		if (fragmentAnalysisRover.GetEffectiveMode(
-			FragmentAutonomyCapability.NavigateSample) == FragmentAutonomyMode.Off)
+		FragmentAutonomyMode navigationMode = fragmentAnalysisRover.GetEffectiveMode(
+			FragmentAutonomyCapability.NavigateSample);
+		if (navigationMode == FragmentAutonomyMode.Off)
 		{
 			fragmentCanvas.FocusNormalizedRect(
 				region.NormalizedBounds, FragmentAnalysisActionOrigin.Player);
 			return;
 		}
 		fragmentAnalysisRover.ProposeNavigationTarget(regionId);
+		if (navigationMode == FragmentAutonomyMode.Supporter)
+			fragmentAnalysisRover.ApproveNavigation();
 	}
 
 	private void OnNavigationTargetChanged(Rect2 bounds, int regionId, bool active)
 	{
 		fragmentRoverOverlay.SetNavigationTarget(bounds, regionId, active);
-		navigationIntentLabel.Text = active
-			? $"NAVIGATION: Moving to R{regionId}"
-			: $"NAVIGATION: Next target R{regionId}";
-		RefreshNavigationControls();
 	}
 
 	private void OnNavigationTargetCleared()
 	{
 		fragmentRoverOverlay.SetNavigationTarget(null, null, false);
-		navigationIntentLabel.Text = "NAVIGATION: Select a region";
-		RefreshNavigationControls();
 	}
 
 	private void OnNavigationExecutionRequested(Rect2 bounds)
@@ -2300,7 +2262,6 @@ public void DispatchAnalysisConfiguration(
 			OnSequenceExitRequested();
 		fragmentCanvas.NavigateToNormalizedRect(
 			bounds, fragmentAnalysisRover.Settings.NavigationDurationSeconds);
-		RefreshNavigationControls();
 	}
 
 	private void OnNavigationCancellationRequested()
@@ -2311,29 +2272,6 @@ public void DispatchAnalysisConfiguration(
 	private void OnViewNavigationCompleted()
 	{
 		fragmentAnalysisRover.NotifyNavigationCompleted();
-	}
-
-	private void OnNavigateToRegionPressed()
-	{
-		CancelStructureEditingForAction();
-		fragmentAnalysisRover.ApproveNavigation();
-	}
-
-	private void OnCancelNavigationPressed()
-	{
-		fragmentCanvas.CancelViewNavigation();
-		fragmentAnalysisRover.CancelNavigationByPlayer();
-	}
-
-	private void RefreshNavigationControls()
-	{
-		bool hasTarget = fragmentAnalysisRover?.NavigationTargetRegionId.HasValue == true;
-		navigateToRegionButton.Disabled = !hasTarget || fragmentAnalysisRover.IsNavigationInProgress;
-		cancelNavigationButton.Disabled = !hasTarget;
-		navigateToRegionButton.Text = fragmentAnalysisRover?.GetEffectiveMode(
-			FragmentAutonomyCapability.NavigateSample) == FragmentAutonomyMode.Performer
-			? "GO NOW"
-			: "GO";
 	}
 
 	private void OnRegionReviewCompleted(int acceptedRegionCount)
@@ -2351,48 +2289,6 @@ public void DispatchAnalysisConfiguration(
 
 	private void OnMetricsChanged(FragmentSignalMeasurementReport report)
 	{
-		if (report == null)
-		{
-			targetMetricsLabel.Text = "SELECTED REGION SIGNAL / NOISE: Rover measurement off";
-			processingEffectLabel.Text = "MEASURED CHANGE: UNAVAILABLE";
-			return;
-		}
-		if (report.Target?.IsComplete == false)
-		{
-			targetMetricsLabel.Text =
-				$"SELECTED REGION R{report.TargetRegionId} · S/N MEASUREMENT SAFETY LIMIT";
-			processingEffectLabel.Text = "MEASURED CHANGE: ABORTED — SEARCH PAUSED";
-			RefreshProcessingSearchControls();
-			return;
-		}
-		targetMetricsLabel.Text = report.Target == null
-			? "SELECTED REGION SIGNAL / NOISE: Select a region"
-			: FormatMetrics(
-				$"SELECTED REGION R{report.TargetRegionId}",
-				report.Target,
-				report.PreviousTarget);
-		FragmentProcessingHistoryEntry latest = null;
-		IReadOnlyList<FragmentProcessingHistoryEntry> history = fragmentAnalysisRover.ProcessingHistory;
-		for (int index = history.Count - 1; index >= 0; index--)
-		{
-			if (fragmentAnalysisRover.ActiveProcessingHistorySequence.HasValue &&
-				history[index].Sequence != fragmentAnalysisRover.ActiveProcessingHistorySequence.Value)
-				continue;
-			if (!fragmentAnalysisRover.ActiveProcessingHistorySequence.HasValue &&
-				history[index].TargetRegionId != report.TargetRegionId) continue;
-			latest = history[index];
-			break;
-		}
-		processingEffectLabel.Text = latest == null
-			? "MEASURED CHANGE: BASELINE"
-			: latest.Effect switch
-			{
-				FragmentProcessingEffect.Improved => $"MEASURED CHANGE: IMPROVED {latest.Delta:+0.00;-0.00;0.00}",
-				FragmentProcessingEffect.Degraded => $"MEASURED CHANGE: DEGRADED {latest.Delta:+0.00;-0.00;0.00}",
-				FragmentProcessingEffect.LittleChange => "MEASURED CHANGE: LITTLE CHANGE",
-				_ => "MEASURED CHANGE: BASELINE"
-			};
-
 		RefreshProcessingHistoryControls();
 		RefreshProcessingSearchControls();
 	}
@@ -2439,23 +2335,6 @@ public void DispatchAnalysisConfiguration(
 		}
 	}
 
-	private static string FormatMetrics(
-		string title,
-		FragmentSignalMetrics current,
-		FragmentSignalMetrics previous)
-	{
-		return $"{title} · SIGNAL / NOISE: " +
-			FormatMetric(current.SignalToNoise, previous?.SignalToNoise);
-	}
-
-	private static string FormatMetric(float value, float? previous)
-	{
-		string delta = previous.HasValue
-			? $" · Δ {value - previous.Value:+0.00;-0.00;0.00}"
-			: string.Empty;
-		return $"{value:0.00}{delta}";
-	}
-
 	private void OnRegionSelected(int regionId)
 	{
 		fragmentAnalysisRover.ApplyRegionEdit(FragmentRegionEditAction.Select, regionId);
@@ -2463,7 +2342,7 @@ public void DispatchAnalysisConfiguration(
 
 	private void OnRegionDrawn(Rect2 normalizedBounds)
 	{
-		addRegionButton.Text = "DRAW REGION";
+		addRegionButton.Text = ManuallyProposeRegionText;
 		fragmentAnalysisRover.AddPlayerRegion(normalizedBounds);
 	}
 
@@ -2491,7 +2370,7 @@ public void DispatchAnalysisConfiguration(
 
 	private void OnAddRegionPressed()
 	{
-		bool armed = addRegionButton.Text == "CANCEL DRAW";
+		bool armed = addRegionButton.Text == CancelRegionProposalText;
 		if (!armed)
 		{
 			CancelStructureEditingForAction();
@@ -2499,7 +2378,7 @@ public void DispatchAnalysisConfiguration(
 			fragmentRoverOverlay.SetShowRegions(true);
 		}
 		fragmentRoverOverlay.SetRegionDrawingArmed(!armed);
-		addRegionButton.Text = armed ? "DRAW REGION" : "CANCEL DRAW";
+		addRegionButton.Text = armed ? ManuallyProposeRegionText : CancelRegionProposalText;
 	}
 
 	private void OnRegionSelectorItemSelected(long index)
@@ -2754,6 +2633,21 @@ public void DispatchAnalysisConfiguration(
 		fragmentAnalysisRover.ToggleRegionViewLock(regionId);
 	}
 
+	private void OnOverlayRegionActionRequested(int regionId, FragmentRegionEditAction action)
+	{
+		CancelStructureEditingForAction();
+		fragmentAnalysisRover.ApplyRegionEdit(
+			action,
+			regionId,
+			applyCropOnAccept: !regionSequenceView.Visible);
+	}
+
+	private void OnFeatureActionRequested(int featureId, FragmentFeatureEditAction action)
+	{
+		CancelStructureEditingForAction();
+		fragmentAnalysisRover.ApplyFeatureEdit(action, featureId);
+	}
+
     private void UpdateProcessingLabels()
     {
         polarizationValueLabel.Text =
@@ -2887,7 +2781,7 @@ public void DispatchAnalysisConfiguration(
 	{
 		HideAutonomousWorkflowPopup();
 		SetCandidateRegionSectionExpanded(true);
-		if (addRegionButton.Text != "CANCEL DRAW") OnAddRegionPressed();
+		if (addRegionButton.Text != CancelRegionProposalText) OnAddRegionPressed();
 	}
 
 	private void OnAutonomousFindAnotherRegionPressed()
@@ -3244,7 +3138,7 @@ public void DispatchAnalysisConfiguration(
 			? (roverPanel.Visible ? $"{menuName} ◀" : $"{menuName} ▶")
 			: (roverPanel.Visible ? $"{menuName} MENU<=" : $"{menuName} MENU=>");
 		if (comparisonOpenButton != null)
-			comparisonOpenButton.Text = "COMPARE";
+			comparisonOpenButton.Text = "COMPARE REGIONS";
 	}
 
 	private void UpdateModeSpecificLayout(FragmentAutonomyMode mode)
@@ -3423,7 +3317,6 @@ public void DispatchAnalysisConfiguration(
 		orientationRegionControls.Visible = expanded;
 		orientationActions.Visible = expanded;
 		quitOrientationViewButton.Visible = expanded;
-		selectedOrientationLabel.Visible = expanded;
 		orientationSelector.Visible = false;
 		orientationEdits.Visible = expanded;
 		if (expanded)
@@ -3490,9 +3383,8 @@ public void DispatchAnalysisConfiguration(
 	private void SetArrowSectionExpanded(bool expanded)
 	{
 		isArrowSectionExpanded = expanded;
-		arrowSectionButton.Text = expanded ? "▼ ARROW & DIRECTION" : "▶ ARROW & DIRECTION";
+		arrowSectionButton.Text = expanded ? "▼ ARROW" : "▶ ARROW";
 		arrowActions.Visible = expanded;
-		arrowLabel.Visible = expanded;
 		arrowSelector.Visible = expanded && arrowSelector.ItemCount > 0;
 		arrowNavigation.Visible = expanded;
 		arrowManual.Visible = expanded;
@@ -3550,8 +3442,6 @@ public void DispatchAnalysisConfiguration(
 		regionSelector.Visible = expanded && regionSelector.ItemCount > 0;
 		candidateRegionEdits.Visible = expanded;
 		regionViewLockButton.Visible = expanded;
-		navigationIntentLabel.Visible = expanded;
-		navigationActions.Visible = expanded;
 		if (expanded) ScrollRoverSectionIntoView(candidateRegionSectionButton);
 	}
 
@@ -3590,7 +3480,6 @@ public void DispatchAnalysisConfiguration(
 			? "▼ RECONSTRUCTED STRUCTURES"
 			: "▶ RECONSTRUCTED STRUCTURES";
 		structureActions.Visible = expanded;
-		selectedStructureLabel.Visible = expanded;
 		structureSelector.Visible = expanded && structureSelector.ItemCount > 0;
 		structureDispositionEdits.Visible = expanded;
 		if (expanded) ScrollRoverSectionIntoView(structureSectionButton);
@@ -3949,7 +3838,6 @@ public void DispatchAnalysisConfiguration(
 		RefreshArrowControls();
 		RefreshDirectionControls();
 		RefreshRegionSequence();
-		RefreshNavigationControls();
 		OnMetricsChanged(fragmentAnalysisRover.MeasurementReport);
 		RefreshProcessingSearchControls();
 		RefreshAutonomousWorkflowUi();

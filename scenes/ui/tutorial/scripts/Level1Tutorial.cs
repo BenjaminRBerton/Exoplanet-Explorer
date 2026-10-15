@@ -290,7 +290,7 @@ public sealed class Level1Tutorial : TutorialScript
 		tutorial.Step("level1.recharging")
 			.Say("RECHARGING AT BASE",
 				"The wood is now stored at the base and charging has begun. Each recharge consumes stored wood.")
-			.PointTo(TutorialTargetIds.SelectedRoverBattery)
+			.PointTo(TutorialTargetIds.DeployedRoverChargingStatus)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
 			.Until(TutorialEvent.BatteryRecharged, IsRover);
@@ -330,6 +330,8 @@ public sealed class Level1Tutorial : TutorialScript
 		tutorial.Step("level1.movement-complete")
 			.Say("FIND THE MONOLITH",
 				"You have learned the rover's three control styles. Continue exploring and use the anomaly readings to find the source of the strongest gravitational anomaly: the monolith.")
+			.WithImage("res://scenes/ui/tutorial/scripts/imagesForPresentation/forestmonolith_inactive.png",
+				TutorialImagePlacement.Right, gap: 20, widthPercent: 12f)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight)
 			.Until(TutorialEvent.RobotMoved, RoverIsNearMonolith);

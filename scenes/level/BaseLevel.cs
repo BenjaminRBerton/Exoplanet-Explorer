@@ -60,6 +60,7 @@ public partial class BaseLevel : Node
 	private TutorialTargetRegistration preplacedBaseTutorialTarget;
 	private TutorialTargetRegistration manualDestinationTutorialTarget;
 	private TutorialTargetRegistration returnDestinationTutorialTarget;
+	private TutorialTargetRegistration roverLiftPositionTutorialTarget;
 	private TutorialTargetRegistration deployedRoverTutorialTarget;
 	private TutorialTargetRegistration deployedDroneTutorialTarget;
 	private TutorialTargetRegistration presentationDirectedMoveDestinationTutorialTarget;
@@ -83,6 +84,7 @@ public partial class BaseLevel : Node
 		buildingManager.SetStartingMaterialCount(levelDefinitionResource.StartingMaterialCount);
 		buildingManager.SetRoverCanGetStuck(levelDefinitionResource.RoverCanGetStuck);
 		gameUI.SetTimeToCompleteLevel(levelDefinitionResource.LevelDuration);
+		gameUI.SetMissionTimerEnabled(!LevelManager.IsTutorialModeActive);
 		if (levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
 		{
 			gameUI.SetMissionTimerRunsWhilePaused(true);
@@ -177,6 +179,10 @@ public partial class BaseLevel : Node
 			RegisterPreplacedBaseTutorialTarget();
 			if (levelDefinitionResource.Id == TutorialCatalog.Level1Id) RegisterLevel1MovementTargets();
 		}
+		if (levelDefinitionResource.Id == TutorialCatalog.Level2Id)
+		{
+			RegisterLevel2LiftTarget();
+		}
 		if (levelDefinitionResource.Id == TutorialCatalog.Level7PresentationId)
 		{
 			RegisterPresentationRobotTargets();
@@ -219,6 +225,21 @@ public partial class BaseLevel : Node
 			TutorialTargetIds.ReturnDestination,
 			this,
 			() => GetWorldCellScreenRect(level1ReturnDestination));
+	}
+
+	private void RegisterLevel2LiftTarget()
+	{
+		roverLiftPositionTutorialTarget = tutorialTargetRegistry.RegisterRectProvider(
+			TutorialTargetIds.RoverLiftPosition,
+			this,
+			() =>
+			{
+				BuildingComponent rover = BuildingComponent.GetValidBuildingComponents(this)
+					.FirstOrDefault(building => building.BuildingResource?.DisplayName == "Rover");
+				return GodotObject.IsInstanceValid(rover)
+					? GetWorldCellScreenRect(rover.GetGridCellPosition() + Vector2I.Up)
+					: null;
+			});
 	}
 
 	private void RegisterPresentationRobotTargets()
@@ -297,6 +318,8 @@ public partial class BaseLevel : Node
 		manualDestinationTutorialTarget = null;
 		returnDestinationTutorialTarget?.Dispose();
 		returnDestinationTutorialTarget = null;
+		roverLiftPositionTutorialTarget?.Dispose();
+		roverLiftPositionTutorialTarget = null;
 		deployedRoverTutorialTarget?.Dispose();
 		deployedRoverTutorialTarget = null;
 		deployedDroneTutorialTarget?.Dispose();
@@ -634,7 +657,8 @@ public partial class BaseLevel : Node
 		}
 
 		currentTimeElapsed++;
-		if (currentTimeElapsed >= levelDefinitionResource.LevelDuration)
+		if (!LevelManager.IsTutorialModeActive &&
+			currentTimeElapsed >= levelDefinitionResource.LevelDuration)
 		{
 			ShowLevelFailed();
 			return;

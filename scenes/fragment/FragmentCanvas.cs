@@ -111,12 +111,16 @@ public partial class FragmentCanvas : Control, IFragmentObservationSource
 	{
 		if (what == NotificationResized)
 		{
+			bool zoomChanged = ClampViewZoom();
 			ClampViewPan();
 			if (_isViewNavigationActive)
 				CalculateFocusedView(
 					_navigationTargetBounds,
 					out _navigationTargetZoom,
 					out _navigationTargetPan);
+			if (zoomChanged)
+				NotifyViewChanged(FragmentAnalysisActionOrigin.System);
+			QueueRedraw();
 		}
 	}
 
@@ -1172,6 +1176,16 @@ public partial class FragmentCanvas : Control, IFragmentObservationSource
             Mathf.Clamp(_viewPan.X, -maximumPan.X, maximumPan.X),
             Mathf.Clamp(_viewPan.Y, -maximumPan.Y, maximumPan.Y));
     }
+
+	private bool ClampViewZoom()
+	{
+		float minimumZoom = GetMinimumViewZoom();
+		float maximumZoom = MathF.Max(generationSettings.MaximumViewZoom, minimumZoom);
+		float clampedZoom = Mathf.Clamp(_viewZoom, minimumZoom, maximumZoom);
+		if (Mathf.IsEqualApprox(clampedZoom, _viewZoom)) return false;
+		_viewZoom = clampedZoom;
+		return true;
+	}
 
     private void GenerateRockTexture(int seed)
     {
