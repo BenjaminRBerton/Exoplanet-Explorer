@@ -112,6 +112,7 @@ public partial class GridManager : Node
 
 	private List<TileMapLayer> allTilemapLayers = new();
 	private Dictionary<TileMapLayer, ElevationLayer> tileMapLayerToElevationLayer = new();
+	private Dictionary<Vector2I, ElevationLayer> bridgeTileToElevationLayer = new();
 	private Dictionary<BuildingComponent, HashSet<Vector2I>> buildingToBuildableTiles = new();
 	private Dictionary<BuildingComponent, HashSet<Vector2I>> buildingToAntennaCoveredTiles = new();
 	private Dictionary<Vector2I, BuildingComponent> TileToBuilding = new();
@@ -259,18 +260,21 @@ public partial class GridManager : Node
 
 	public (ElevationLayer elevationLayer, bool isElevated) GetElevationLayerForTile(Vector2I tilePosition)
 	{
+		if (bridgeTileToElevationLayer.TryGetValue(tilePosition, out var bridgeElevationLayer))
+		{
+			return (bridgeElevationLayer, bridgeElevationLayer != null);
+		}
+
 		var (terrainLayer, _) = GetGroundTerrainCustomData(tilePosition, IS_BUILDABLE);
 		if (terrainLayer != null)
 		{
 			var elevationLayer = tileMapLayerToElevationLayer.GetValueOrDefault(terrainLayer);
-			bool isElevated = elevationLayer != null && elevationLayer.Name.ToString().StartsWith("ElevationLayer", StringComparison.Ordinal);
-			return (elevationLayer, isElevated);
+			return (elevationLayer, elevationLayer != null);
 		}
 		
 		// Fallback: if no valid tile found, use baseTerrainTilemapLayer's elevation
 		var fallbackElevationLayer = tileMapLayerToElevationLayer.GetValueOrDefault(baseTerrainTilemapLayer);
-		bool fallbackIsElevated = fallbackElevationLayer != null && fallbackElevationLayer.Name.ToString().StartsWith("ElevationLayer", StringComparison.Ordinal);
-		return (fallbackElevationLayer, fallbackIsElevated);
+		return (fallbackElevationLayer, fallbackElevationLayer != null);
 	}
 
 	public MinimapTerrainType GetMinimapTerrainType(Vector2I tilePosition)
@@ -294,35 +298,76 @@ public partial class GridManager : Node
 	{
 		using (Telemetry.Scope("GridManager.TryPlaceBridgeTile"))
 		{
-		var (robotElevation, robotIsElevated) = GetElevationLayerForTile(robotPosition.Position);
-		var (targetElevation, targetIsElevated) = GetElevationLayerForTile(bridgeArea.Position);
-		var bridgeTileMapLayer = bridgeTileMapLayerBase;
-		
-		if (robotElevation == null && targetElevation != null)
+			var (robotElevation, robotIsElevated) = GetElevationLayerForTile(robotPosition.Position);
+			var bridgeTileMapLayer = robotIsElevated
+				? GetOrCreateBridgeTileMapLayer(robotElevation)
+				: bridgeTileMapLayerBase;
+
+			if (!IsInstanceValid(bridgeTileMapLayer))
+			{
+				GD.PushError($"Cannot place bridge tile at {bridgeArea.Position}: no bridge layer is configured for the robot's elevation.");
+				return false;
+			}
+
+			Vector2I atlasCoordinates;
+			if (orientation == "horizontal")
+			{
+				atlasCoordinates = new Vector2I(1, 0);
+			}
+			else if (orientation == "vertical")
+			{
+				atlasCoordinates = new Vector2I(0, 2);
+			}
+			else
+			{
+				GD.PushError($"Cannot place bridge tile: unknown orientation '{orientation}'.");
+				return false;
+			}
+
+			bridgeTileMapLayer.SetCell(bridgeArea.Position, 14, atlasCoordinates);
+			// A bridge belongs to the exact surface occupied by the rover that built it,
+			// irrespective of the terrain drawn below the destination cell.
+			bridgeTileToElevationLayer[bridgeArea.Position] = robotElevation;
+			return true;
+		}
+	}
+
+	private TileMapLayer GetOrCreateBridgeTileMapLayer(ElevationLayer elevationLayer)
+	{
+		if (elevationLayer == null)
 		{
-			GD.PrintErr("Cannot place bridge tile: Robot elevation layer and target elevation layer do not match.");
-			return false;
+			return bridgeTileMapLayerBase;
 		}
-		if (robotIsElevated)
+
+		var existingLayer = allTilemapLayers.FirstOrDefault(layer =>
+			tileMapLayerToElevationLayer.GetValueOrDefault(layer) == elevationLayer &&
+			layer.Name.ToString().StartsWith("BridgeLayer", StringComparison.Ordinal));
+		if (existingLayer != null)
 		{
-			bridgeTileMapLayer = bridgeTileMapLayerElevation;
+			return existingLayer;
 		}
-		else
+
+		if (!IsInstanceValid(bridgeTileMapLayerElevation) || bridgeTileMapLayerElevation.TileSet == null)
 		{
-			bridgeTileMapLayer = bridgeTileMapLayerBase;
+			return null;
 		}
-		if (orientation == "horizontal")
+
+		var runtimeLayer = new TileMapLayer
 		{
-			var position = bridgeArea.Position;
-			bridgeTileMapLayer.SetCell(position, 14, new Vector2I(1, 0)); // Assuming 14 is the bridge tile ID
-		}
-		else if (orientation == "vertical")
-		{
-			var position = bridgeArea.Position;
-			bridgeTileMapLayer.SetCell(position, 14, new Vector2I(0, 2)); // Assuming 14 is the bridge tile ID
-		}
-		return true;
-		}
+			Name = "BridgeLayerElevationRuntime",
+			TileSet = bridgeTileMapLayerElevation.TileSet,
+			YSortEnabled = true,
+			ZIndex = bridgeTileMapLayerElevation.ZIndex,
+			ZAsRelative = bridgeTileMapLayerElevation.ZAsRelative,
+			TextureFilter = bridgeTileMapLayerElevation.TextureFilter,
+		};
+		elevationLayer.AddChild(runtimeLayer);
+
+		// Runtime bridge tiles must participate in both custom-data lookup and exact
+		// elevation lookup. Put the visual layer first, matching reverse scene order.
+		allTilemapLayers.Insert(0, runtimeLayer);
+		tileMapLayerToElevationLayer[runtimeLayer] = elevationLayer;
+		return runtimeLayer;
 	}
 
 	public string GetTileDiscoveredElements(Vector2I tilePosition)
@@ -504,18 +549,15 @@ public partial class GridManager : Node
 			});
 		}
 
-		(TileMapLayer firstTileMapLayer, _) = GetGroundTerrainCustomData(tilesDestination[0], IS_ROUGH_TERRAIN);
-		var targetElevationLayer = firstTileMapLayer != null ? tileMapLayerToElevationLayer[firstTileMapLayer] : null;
-
-		(firstTileMapLayer, _) = GetGroundTerrainCustomData(originTile, IS_ROUGH_TERRAIN);
-		var OriginElevationLayer = firstTileMapLayer != null ? tileMapLayerToElevationLayer[firstTileMapLayer] : null;
+		var (targetElevationLayer, _) = GetElevationLayerForTile(tilesDestination[0]);
+		var (originElevationLayer, _) = GetElevationLayerForTile(originTile);
 		var (robotElevation, robotIsElevated) = GetElevationLayerForTile(originTile);
 		(_, bool isInMud) = GetGroundTerrainCustomData(originTile, IS_MUD);
 
 		return tilesDestination.All((tilePosition) =>
 		{
 			(TileMapLayer roughLayer, bool isRoulable) = GetGroundTerrainCustomData(tilePosition, IS_ROUGH_TERRAIN);
-			var elevationLayer = roughLayer != null ? tileMapLayerToElevationLayer[roughLayer] : null;
+			var (elevationLayer, _) = GetElevationLayerForTile(tilePosition);
 			(TileMapLayer mudLayer, bool isMud) = GetGroundTerrainCustomData(tilePosition, IS_MUD);
 			(TileMapLayer waterLayer, bool isWater) = GetGroundTerrainCustomData(tilePosition, IS_WATER);
 			var (targetElevation, targetIsElevated) = GetElevationLayerForTile(tilePosition);
@@ -543,7 +585,7 @@ public partial class GridManager : Node
 					// 1. Crossing over base terrain (bridge spans over it)
 					// 2. Crossing elevated water
 					// 3. Reaching elevated land (destination cliff)
-					canCrossWithBridge = !targetIsElevated || (targetIsElevated && (isWater || OriginElevationLayer != targetElevationLayer));
+					canCrossWithBridge = !targetIsElevated || (targetIsElevated && (isWater || originElevationLayer != targetElevationLayer));
 				}
 				else
 				{
@@ -557,9 +599,9 @@ public partial class GridManager : Node
 
 			var check1 = !occupiedTiles.Contains(tilePosition) || originTiles.Contains(tilePosition);
 			var check2 = elevationLayer == targetElevationLayer || canCrossWithBridge;
-			var check3 = OriginElevationLayer == targetElevationLayer || canCrossWithBridge || 
-			             (isMud && OriginElevationLayer == targetElevationLayer) || 
-			             (isInMud && OriginElevationLayer == targetElevationLayer);
+			var check3 = originElevationLayer == targetElevationLayer || canCrossWithBridge ||
+			             (isMud && originElevationLayer == targetElevationLayer) ||
+			             (isInMud && originElevationLayer == targetElevationLayer);
 			var check7 = !isRoulable;
 			var check9 = !isWater || canCrossWithBridge;
 
@@ -1645,6 +1687,7 @@ public partial class GridManager : Node
     baseAntennaCoveredTiles.Clear();
     baseProximityTiles.Clear();
     monolithTiles.Clear();
+	bridgeTileToElevationLayer.Clear();
     TileToBuilding.Clear();
     buildingToBuildableTiles.Clear();
 	buildingToAntennaCoveredTiles.Clear();

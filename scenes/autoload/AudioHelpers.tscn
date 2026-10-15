@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://dtanw3tk455ur"]
+[gd_scene load_steps=24 format=3 uid="uid://dtanw3tk455ur"]
 
 [ext_resource type="Script" path="res://scenes/autoload/AudioHelpers.cs" id="1_s3wg7"]
 [ext_resource type="AudioStream" uid="uid://qsbn74jjuvup" path="res://assets/audio/explosion_01.wav" id="2_yoq2d"]
@@ -20,6 +20,7 @@
 [ext_resource type="AudioStream" uid="uid://bv4ksa82uohfn" path="res://assets/audio/intergalactic-landing-327868.mp3" id="18_2sneg"]
 [ext_resource type="AudioStream" uid="uid://dxwbbqkky4rgk" path="res://assets/audio/GeigerClack.wav" id="19_rrnqa"]
 [ext_resource type="AudioStream" uid="uid://xh24266v1iee" path="res://assets/audio/GeigerCrackleLoop.wav" id="20_shn8t"]
+[ext_resource type="AudioStream" path="res://assets/audio/error_006.wav" id="21_failure"]
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_emq37"]
 streams_count = 3
@@ -50,6 +51,11 @@ bus = &"SFX"
 [node name="VictoryAudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_ihlbg")
 volume_db = -15.0
+bus = &"SFX"
+
+[node name="FailureAudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("21_failure")
+volume_db = -8.0
 bus = &"SFX"
 
 [node name="MusicAudioStreamPlayer" type="AudioStreamPlayer" parent="."]

@@ -855,11 +855,10 @@ public partial class GameUI : CanvasLayer
 			GD.Print(llmResponse);
 			GD.Print("====================");
 			
-			// Import the optimized path
-			ImportPathFromJson(llmResponse);
-			
-			// Success feedback
-			adviceLabel.Text = "Proposed path available!";
+			// Import the optimized path and report the real outcome to the player.
+			adviceLabel.Text = ImportPathFromJson(llmResponse, out string importError)
+				? "Proposed path available!"
+				: $"Path suggestion failed: {importError}";
 		}
 		catch (Exception ex)
 		{
@@ -938,6 +937,9 @@ public partial class GameUI : CanvasLayer
 			});
 		}
 		
+		Rect2I levelBounds = (GetParent() as BaseLevel)?.GetLevelTileBounds() ?? new Rect2I();
+		int mapWidth = levelBounds.Size.X > 0 ? levelBounds.Size.X : 100;
+		int mapHeight = levelBounds.Size.Y > 0 ? levelBounds.Size.Y : 100;
 		var request = new PathApiRequest
 		{
 			ContextTiles = contextTileDtos,
@@ -950,8 +952,8 @@ public partial class GameUI : CanvasLayer
 				Width = maxX - minX + 1,
 				Height = maxY - minY + 1
 			},
-			MapWidth = 100, // TODO: Get from GridManager
-			MapHeight = 100, // TODO: Get from GridManager
+			MapWidth = mapWidth,
+			MapHeight = mapHeight,
 		};
 		
 		// If single robot, use legacy CurrentPath for backward compatibility
@@ -1030,59 +1032,83 @@ public partial class GameUI : CanvasLayer
 	/// <summary>
 	/// Import LLM response and redraw the path(s)
 	/// </summary>
-	public void ImportPathFromJson(string jsonResponse)
+	public bool ImportPathFromJson(string jsonResponse, out string errorMessage)
 	{
+		errorMessage = string.Empty;
 		try
 		{
 			var response = JsonSerializer.Deserialize<PathApiResponse>(jsonResponse);
 			
 			if (response == null || !response.Success)
 			{
-				GD.PrintErr($"Invalid response: {response?.Message ?? "Unknown error"}");
-				return;
+				errorMessage = response?.Message ?? "Unknown API error";
+				GD.PrintErr($"Invalid response: {errorMessage}");
+				return false;
 			}
 			
 			GD.Print($"LLM Reasoning: {response.Reasoning}");
-			
-			// Clear existing path
-			buildingManager.ClearAllPaintedTiles();
-			
-			// Clear previous exclusion zones
-			BuildingManager.ClearExclusionZones();
 			
 			// Get all available robots for mapping (handle duplicates by taking first match)
 			var allRobots = BuildingComponent.GetValidBuildingComponents(this);
 			var robotsByName = allRobots
 				.GroupBy(r => r.BuildingResource.DisplayName)
 				.ToDictionary(g => g.Key, g => g.First());
+
+			// Treat the API response as untrusted input. Validate it before replacing the
+			// player's current path so a malformed suggestion cannot erase their work.
+			var usableStrategicPlans = response.StrategicPlans?
+				.Where(plan => plan != null &&
+					!string.IsNullOrWhiteSpace(plan.RobotName) &&
+					robotsByName.ContainsKey(plan.RobotName) &&
+					plan.Waypoints != null && plan.Waypoints.Count > 0)
+				.ToList() ?? new List<StrategicPlanDto>();
+			var usableSuggestedPaths = response.SuggestedPaths?
+				.Where(path => path != null &&
+					!string.IsNullOrWhiteSpace(path.RobotName) &&
+					robotsByName.ContainsKey(path.RobotName) &&
+					path.Tiles != null && path.Tiles.Count > 0)
+				.ToList() ?? new List<PathDataDto>();
+			bool hasSingleStrategicPlan = response.StrategicPlan != null &&
+				!string.IsNullOrWhiteSpace(response.StrategicPlan.RobotName) &&
+				robotsByName.ContainsKey(response.StrategicPlan.RobotName) &&
+				response.StrategicPlan.Waypoints != null && response.StrategicPlan.Waypoints.Count > 0;
+			bool hasSingleSuggestedPath = response.SuggestedPath != null &&
+				!string.IsNullOrWhiteSpace(response.SuggestedPath.RobotName) &&
+				robotsByName.ContainsKey(response.SuggestedPath.RobotName) &&
+				response.SuggestedPath.Tiles != null && response.SuggestedPath.Tiles.Count > 0;
+
+			if (usableStrategicPlans.Count == 0 && !hasSingleStrategicPlan &&
+				usableSuggestedPaths.Count == 0 && !hasSingleSuggestedPath)
+			{
+				errorMessage = "The API response contained no usable path for an available robot.";
+				GD.PrintErr(errorMessage);
+				return false;
+			}
+
+			buildingManager.ClearAllPaintedTiles();
+			BuildingManager.ClearExclusionZones();
 			
 			// Collect all exclusion zones from all plans
 			var allExclusionZones = new HashSet<Vector2I>();
 			
 			// Check for new strategic plan format (waypoints + exclusions)
-			bool hasMultipleStrategicPlans = response.StrategicPlans != null && response.StrategicPlans.Count > 0;
-			bool hasSingleStrategicPlan = response.StrategicPlan != null;
+			bool hasMultipleStrategicPlans = usableStrategicPlans.Count > 0;
 			
 			if (hasMultipleStrategicPlans)
 			{
 				// Multi-robot strategic plan
-				GD.Print($"Importing strategic plans for {response.StrategicPlans.Count} robots");
+				GD.Print($"Importing strategic plans for {usableStrategicPlans.Count} robots");
 				
 				int totalWaypoints = 0;
-				foreach (var plan in response.StrategicPlans)
+				foreach (var plan in usableStrategicPlans)
 				{
-					if (!robotsByName.TryGetValue(plan.RobotName, out var robot))
-					{
-						GD.PrintErr($"Robot '{plan.RobotName}' not found in scene!");
-						continue;
-					}
-					
-					GD.Print($"  - {plan.RobotName}: {plan.Waypoints.Count} waypoints, {plan.ExclusionZones.Count} exclusions");
+					var exclusionZones = plan.ExclusionZones ?? new List<ExclusionZoneDto>();
+					GD.Print($"  - {plan.RobotName}: {plan.Waypoints.Count} waypoints, {exclusionZones.Count} exclusions");
 					
 					totalWaypoints += plan.Waypoints.Count;
 					
 					// Collect exclusion zones from this plan
-					foreach (var exclusion in plan.ExclusionZones)
+					foreach (var exclusion in exclusionZones)
 					{
 						var gridPos = new Vector2I(exclusion.GridX, exclusion.GridY);
 						allExclusionZones.Add(gridPos);
@@ -1100,7 +1126,7 @@ public partial class GameUI : CanvasLayer
 				
 				// Generate preview of the full path (this creates the actual painted tiles to execute)
 				// Note: We don't create waypoint tiles separately since the preview generates the complete path
-				GeneratePathPreview(response.StrategicPlans);
+				GeneratePathPreview(usableStrategicPlans);
 			}
 			else if (hasSingleStrategicPlan)
 			{
@@ -1109,10 +1135,11 @@ public partial class GameUI : CanvasLayer
 				
 				if (robotsByName.TryGetValue(plan.RobotName, out var robot))
 				{
-					GD.Print($"Importing strategic plan for {plan.RobotName}: {plan.Waypoints.Count} waypoints, {plan.ExclusionZones.Count} exclusions");
+					var exclusionZones = plan.ExclusionZones ?? new List<ExclusionZoneDto>();
+					GD.Print($"Importing strategic plan for {plan.RobotName}: {plan.Waypoints.Count} waypoints, {exclusionZones.Count} exclusions");
 					
 					// Collect exclusion zones from this plan
-					foreach (var exclusion in plan.ExclusionZones)
+					foreach (var exclusion in exclusionZones)
 					{
 						var gridPos = new Vector2I(exclusion.GridX, exclusion.GridY);
 						allExclusionZones.Add(gridPos);
@@ -1133,23 +1160,21 @@ public partial class GameUI : CanvasLayer
 				}
 				else
 				{
-					GD.PrintErr($"Robot '{plan.RobotName}' not found in scene!");
+					errorMessage = $"Robot '{plan.RobotName}' is not available.";
+					GD.PrintErr(errorMessage);
+					return false;
 				}
 			}
 			// Backward compatibility: Check for old full-path format
-			else if (response.SuggestedPaths != null && response.SuggestedPaths.Count > 0)
+			else if (usableSuggestedPaths.Count > 0)
 			{
 				// Multi-robot full path response (old format)
-				GD.Print($"Importing FULL paths for {response.SuggestedPaths.Count} robots (old format)");
+				GD.Print($"Importing FULL paths for {usableSuggestedPaths.Count} robots (old format)");
 				
 				int totalTiles = 0;
-				foreach (var pathData in response.SuggestedPaths)
+				foreach (var pathData in usableSuggestedPaths)
 				{
-					if (!robotsByName.TryGetValue(pathData.RobotName, out var robot))
-					{
-						GD.PrintErr($"Robot '{pathData.RobotName}' not found in scene!");
-						continue;
-					}
+					var robot = robotsByName[pathData.RobotName];
 					
 					buildingManager.SelectBuilding(robot);
 					
@@ -1163,7 +1188,7 @@ public partial class GameUI : CanvasLayer
 				
 				GD.Print($"Successfully imported {totalTiles} tiles");
 			}
-			else if (response.SuggestedPath != null)
+			else if (hasSingleSuggestedPath)
 			{
 				// Single robot full path (old format - backward compatibility)
 				if (robotsByName.TryGetValue(response.SuggestedPath.RobotName, out var robot))
@@ -1180,18 +1205,26 @@ public partial class GameUI : CanvasLayer
 				}
 				else
 				{
-					GD.PrintErr($"Robot '{response.SuggestedPath.RobotName}' not found in scene!");
+					errorMessage = $"Robot '{response.SuggestedPath.RobotName}' is not available.";
+					GD.PrintErr(errorMessage);
+					return false;
 				}
 			}
 			else
 			{
-				GD.PrintErr("Response contains no recognized path or plan data");
+				errorMessage = "The API response contained no usable path.";
+				GD.PrintErr(errorMessage);
+				return false;
 			}
 		}
 		catch (JsonException ex)
 		{
+			errorMessage = "The API returned an unreadable response.";
 			GD.PrintErr($"Failed to parse JSON response: {ex.Message}");
+			return false;
 		}
+
+		return true;
 	}
 	
 	private void OnDisplayAnomalyMapButtonPressed()

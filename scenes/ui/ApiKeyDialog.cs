@@ -23,7 +23,7 @@ public partial class ApiKeyDialog : AcceptDialog
 		
 		// Create status label
 		statusLabel = new Label();
-		statusLabel.Text = "Get your API key from: https://makersuite.google.com/app/apikey";
+		statusLabel.Text = "Get your API key from: https://aistudio.google.com/app/apikey";
 		statusLabel.AddThemeColorOverride("font_color", Colors.Gray);
 		
 		// Add to dialog

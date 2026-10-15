@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 public partial class MiniMapController : Node
 {
-    [Export] public PackedScene MiniMapScene;      // res://ui/AnomalyMiniMap.tscn
+    [Export] public PackedScene MiniMapScene;      // res://scenes/ui/AnomalyMiniMap.tscn
     [Export] public SubViewportContainer Container; // UI slot bottom-right
 
     private AnomalyMiniMap _mini;

@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Google.GenAI;
 using Google.GenAI.Types;
@@ -13,7 +14,7 @@ public partial class GeminiApiService : Node
 {
 	private Client geminiClient;
 	private string apiKey;
-	private const string MODEL_NAME = "gemini-2.0-flash-exp";
+	private const string MODEL_NAME = "gemini-3.8-flash";
 	
 	public override void _Ready()
 	{
@@ -38,7 +39,7 @@ public partial class GeminiApiService : Node
 		}
 		else
 		{
-			GD.PrintErr("[GeminiApiService] No API key found!");
+			GD.Print("[GeminiApiService] Optional AI path suggestions are disabled until an API key is configured.");
 		}
 	}
 	
@@ -54,11 +55,7 @@ public partial class GeminiApiService : Node
 		{
 			// Try loading from config file
 			string configPath = "user://gemini_config.txt";
-			string resolvedPath = ProjectSettings.GlobalizePath(configPath);
-			GD.Print($"[GeminiApiService] Looking for config file at: {configPath}");
-			GD.Print($"[GeminiApiService] Resolved to absolute path: {resolvedPath}");
-			GD.Print($"[GeminiApiService] File exists: {FileAccess.FileExists(configPath)}");
-			
+
 			if (FileAccess.FileExists(configPath))
 			{
 				using var file = FileAccess.Open(configPath, FileAccess.ModeFlags.Read);
@@ -74,7 +71,7 @@ public partial class GeminiApiService : Node
 			}
 			else
 			{
-				GD.PrintErr($"[GeminiApiService] Config file not found at: {resolvedPath}");
+				GD.Print("[GeminiApiService] No local API-key configuration found.");
 			}
 		}
 		else
@@ -84,7 +81,7 @@ public partial class GeminiApiService : Node
 		
 		if (string.IsNullOrEmpty(apiKey))
 		{
-			GD.PrintErr("Gemini API key not found! Set GEMINI_API_KEY environment variable or create user://gemini_config.txt");
+			GD.Print("Set GEMINI_API_KEY or use the in-game configuration dialog to enable AI path suggestions.");
 		}
 		else
 		{
@@ -363,12 +360,13 @@ Respond with ONLY a JSON object (no markdown, no extra text):
 	/// </summary>
 	private string GenerateErrorResponse(string errorMessage)
 	{
-		return @"{
-			""success"": false,
-			""message"": """ + errorMessage + @""",
-			""suggestedPath"": null,
-			""reasoning"": ""Error occurred during path optimization""
-		}";
+		return JsonSerializer.Serialize(new
+		{
+			success = false,
+			message = errorMessage,
+			suggestedPath = (object)null,
+			reasoning = "Error occurred during path optimization"
+		});
 	}
 	
 	/// <summary>

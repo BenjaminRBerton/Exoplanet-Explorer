@@ -2,6 +2,9 @@
 
 # Quick setup script for Gemini API key
 
+# Keep newly created configuration files private to the current user.
+umask 077
+
 echo "╔════════════════════════════════════════════════╗"
 echo "║   Gemini API Setup for HAT Game               ║"
 echo "╚════════════════════════════════════════════════╝"
@@ -16,7 +19,7 @@ elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
     USER_DIR="$APPDATA/HAT_Game"
 else
     echo "❌ Could not detect your operating system"
-    echo "Please manually create the config file as described in GEMINI_SETUP.md"
+    echo "Please set GEMINI_API_KEY before launching the game."
     exit 1
 fi
 
@@ -29,7 +32,7 @@ echo ""
 if [ -z "$1" ]; then
     echo "Usage: ./setup_gemini.sh YOUR_API_KEY"
     echo ""
-    echo "Get your API key from: https://makersuite.google.com/app/apikey"
+    echo "Get your API key from: https://aistudio.google.com/app/apikey"
     echo ""
     echo "Example:"
     echo "  ./setup_gemini.sh AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -50,7 +53,7 @@ fi
 mkdir -p "$USER_DIR"
 
 # Save API key
-echo "$API_KEY" > "$CONFIG_FILE"
+printf '%s\n' "$API_KEY" > "$CONFIG_FILE"
 
 if [ $? -eq 0 ]; then
     echo "✅ API key saved successfully!"

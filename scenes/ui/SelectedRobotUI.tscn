@@ -389,8 +389,8 @@ stretch_mode = 5
 [node name="DropResourcesButton" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/ScrollContainer/VBoxContainer/MarginContainer2/VBoxContainer5/HBoxContainer2/ResourcesCarriedContainer/PanelContainer3/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Drop ressources carried by the robot at the base"
-text = "Drop ressources"
+tooltip_text = "Drop resources carried by the robot at the base"
+text = "Drop resources"
 
 [node name="MiniMapController" parent="MarginContainer/HBoxContainer" instance=ExtResource("6_n5k2f")]
 unique_name_in_owner = true

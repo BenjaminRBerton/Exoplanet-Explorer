@@ -176,28 +176,28 @@ public sealed class Level7Presentation : TutorialScript
 
 		presentation.Step("demo.game11-rover-state")
 			.Say("OBSERVABILITY — MONITOR THE ROVER",
-				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. This information supports interdependence and teamwork.")
 			.PointTo(TutorialTargetIds.SelectedRobotUI)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
-		presentation.Step("demo.game11-rover-state")
+		presentation.Step("demo.game11-rover-battery")
 			.Say("OBSERVABILITY — MONITOR THE ROVER",
-				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+				"The rover's remaining battery is always visible, helping the operator decide when it should return to base and recharge.")
 			.PointTo(TutorialTargetIds.SelectedRoverBattery)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
 		presentation.Step("demo.game12-rover-state")
 			.Say("OBSERVABILITY — MONITOR THE ROVER",
-				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+				"The carried-resources display helps the operator judge when the rover should return to base and what construction options are available.")
 			.PointTo(TutorialTargetIds.ResourcesCarried)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();
 
 		presentation.Step("demo.game13-rover-state")
 			.Say("OBSERVABILITY — MONITOR THE ROVER",
-				"The selected-robot panel reports battery, carried resources, current mode, and sensor information. Those information supports interdependence and thus teaming.")
+				"The anomaly reading exposes what the rover senses, helping the operator interpret its behavior and guide the search.")
 			.PointTo(TutorialTargetIds.AnomalyIndicator)
 			.GuideAction().UndimBackground()
 			.PlaceCallout(TutorialCalloutPlacement.TopRight).UntilContinue();

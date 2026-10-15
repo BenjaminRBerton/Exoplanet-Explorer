@@ -1,4 +1,9 @@
-# Godot 4+ specific ignores
-.godot/
-Release
-out/
+# Godot-generated files and local exports
+/.godot/
+/Release/
+/out/
+/downloads/
+
+# Local IDE and operating-system files
+.DS_Store
+*.user

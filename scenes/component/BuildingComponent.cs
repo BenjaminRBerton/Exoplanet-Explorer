@@ -122,7 +122,6 @@ public partial class BuildingComponent : Node2D
 			buildingAnimatorComponent.DestroyAnimationFinished += OnDestroyAnimationFinished;
 		}
 		AddToGroup(nameof(BuildingComponent));
-		Callable.From(Initialize).CallDeferred();
 
 		// Get the root node of the current scene
 		Node rootNode = GetTree().Root;
@@ -147,10 +146,15 @@ public partial class BuildingComponent : Node2D
 		}
 		else
 		{
-			GD.PushError("BaseLevel node not found.");
+			// The main menu uses live building scenes as decoration. They are not part
+			// of a playable level and must not initialize gameplay dependencies.
+			Battery = BuildingResource.BatteryMax;
+			SetProcess(false);
+			return;
 		}
-		Battery = this.BuildingResource.BatteryMax;
+		Battery = BuildingResource.BatteryMax;
 		gravitationalAnomalyMap = level.GetFirstNodeOfType<GravitationalAnomalyMap>();
+		Callable.From(Initialize).CallDeferred();
 
 		if(!BuildingResource.IsAerial && !BuildingResource.IsBase)
 		{
@@ -628,12 +632,12 @@ public partial class BuildingComponent : Node2D
 	class NodeAStar
 	{
 		public Vector2I Position;
-		public NodeAStar? Parent;
+		public NodeAStar Parent;
 		public int G; // Cost from start to current node
 		public int H; // Heuristic cost from current node to target
 		public int F => G + H; // Total cost
 
-		public NodeAStar(Vector2I position, NodeAStar? parent, int g, int h)
+		public NodeAStar(Vector2I position, NodeAStar parent, int g, int h)
 		{
 			Position = position;
 			Parent = parent;

@@ -31,6 +31,7 @@ tile_set = ExtResource("3_qby2l")
 
 [node name="BridgeLayerBase" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer" index="3"]
 unique_name_in_owner = true
+y_sort_enabled = true
 tile_set = ExtResource("3_qby2l")
 
 [node name="ElevationLayer" parent="YSortRoot/BaseTerrainTileMapLayer" index="4" instance=ExtResource("4_g4gl0")]
@@ -51,6 +52,7 @@ tile_set = ExtResource("3_qby2l")
 
 [node name="BridgeLayerElevation" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer/ElevationLayer" index="4"]
 unique_name_in_owner = true
+y_sort_enabled = true
 tile_set = ExtResource("3_qby2l")
 
 [node name="TreeLayer" type="TileMapLayer" parent="YSortRoot/BaseTerrainTileMapLayer" index="5"]

@@ -88,6 +88,11 @@ public partial class SaveManager : Node
 		var dataString = JsonConvert.SerializeObject(saveData);
 
 		using var saveFile = FileAccess.Open(SAVE_FILE_PATH, FileAccess.ModeFlags.Write);
+		if (saveFile == null)
+		{
+			GD.PushWarning($"Could not write save data: {FileAccess.GetOpenError()}");
+			return;
+		}
 		saveFile.StoreLine(dataString);
 	}
 
@@ -101,13 +106,20 @@ public partial class SaveManager : Node
 		}
 
 		using var saveFile = FileAccess.Open(SAVE_FILE_PATH, FileAccess.ModeFlags.Read);
+		if (saveFile == null)
+		{
+			GD.PushWarning($"Could not read save data: {FileAccess.GetOpenError()}");
+			saveData = new SaveData();
+			ApplySavedOptions();
+			return;
+		}
 		var dataString = saveFile.GetLine();
 		try
 		{
 		saveData = JsonConvert.DeserializeObject<SaveData>(dataString) ?? new SaveData();
 		saveData.EnsureDefaults();
 		}
-		catch(Exception _)
+		catch(Exception)
 		{
 			GD.PushWarning("Save JSON file was corrupted");
 			saveData = new SaveData();

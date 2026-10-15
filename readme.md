@@ -1,132 +1,74 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18651448.svg)](https://doi.org/10.5281/zenodo.18651448)
 
-# Exoplanet Explorer  
-**An Open Educational Game for Teaching Human–Autonomy Teaming (HAT)**
+# Exoplanet Explorer
 
----
+An open-source educational game for teaching and studying human–autonomy teaming (HAT).
 
-## Overview
+As the supervisor of a remote planetary mission, the player coordinates ground rovers and aerial drones to explore an unknown environment, manage energy and communications, gather resources, and locate a mysterious monolith. The game makes task allocation, interdependence, coordination breakdowns, and interface transparency directly observable through play.
 
-**Exoplanet Explorer** is an open-source educational video game designed to support the teaching and study of **Human–Autonomy Teaming (HAT)**.
+## Download and play
 
-The game provides a dynamic collaboration environment in which a human player supervises and coordinates a team of autonomous robotic agents operating in a planetary exploration mission.
+Download the archive for your platform from the [GitHub Releases](https://github.com/Bertonlome/Human-Autonomy-Teaming-Game/releases) page, extract the complete archive, and launch Exoplanet Explorer. Keep the executable and its `.pck` file together.
 
-Unlike traditional case-based teaching materials, Exoplanet Explorer allows learners to *interact directly* with autonomy, making task interdependencies, coordination breakdowns, and interface transparency issues experientially observable.
+The main menu includes guided tutorials, game rules, and a complete controls reference. A keyboard and mouse are recommended. The game supports Windows, macOS, and Linux desktop builds.
 
-The platform serves two complementary purposes:
+## Educational use
 
-1. **Pedagogical tool** for teaching Interdependence Analysis  
-2. **Lightweight research testbed** for studying human–autonomy interaction  
+Exoplanet Explorer can support activities in:
 
----
+- coactive design and interdependence analysis;
+- human–robot task allocation;
+- coordination and communication constraints;
+- adaptable autonomy; and
+- interface design for human–autonomy teams.
 
-## Educational Objectives
+Typical classroom work asks learners to play a representative mission, assess the robots' capabilities, identify coordination requirements, and propose interface improvements grounded in HAT principles.
 
-The game is explicitly designed to support instruction in:
+## Build from source
 
-- Coactive Design, especially Interdependence Analysis (IA)
-- Task allocation modeling
-- Human–autonomy coordination constraints
-- Shared Interface ergonomic design in HAT systems
+Prerequisites:
 
-Typical instructional use includes asking students to:
+- [Godot Engine 4.3 with .NET support](https://godotengine.org/download/archive/4.3-stable/); and
+- the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
-- Model task allocation between human and robots  
-- Identify unmet coordination requirements  
-- Propose interface improvements grounded in HAT principles  
-- Reflect on autonomy vs. automation distinctions  
+Clone and restore the project:
 
----
+```bash
+git clone https://github.com/Bertonlome/Human-Autonomy-Teaming-Game.git
+cd Human-Autonomy-Teaming-Game
+dotnet restore HAT_Game.sln
+```
 
-Archived releases are permanently available via Zenodo:
+Open `project.godot` in the Godot editor and run the project. A command-line build can be checked with:
 
-**DOI:** *(to be added after first release)*
+```bash
+dotnet build HAT_Game.sln
+```
 
----
+## Optional Gemini integration
 
-## Narrative Context
+The custom-path interface can request strategic path suggestions from the Google Gemini API. This feature is optional; the rest of the game does not require an API key.
 
-You are leading a pioneering mission from a control room on earth to a distant exoplanet.
+Create a key in [Google AI Studio](https://aistudio.google.com/app/apikey), then enter it through the in-game API-key dialog or set the `GEMINI_API_KEY` environment variable before starting the game. Requests include the painted route, map coordinates, nearby terrain context, robot names, and player annotations. The key is stored locally when entered in the game; do not commit it to this repository or share it in bug reports.
 
-After deploying a landing module, you supervise a swarm of heterogeneous robots tasked with:
+## Research and citation
 
-- Mapping unknown terrain  
-- Gathering resources  
-- Detecting environmental anomalies  
-- Searching for traces of a mysterious monolith  
+Archived releases are available from [Zenodo](https://doi.org/10.5281/zenodo.18651448).
 
-Communication constraints, limited resources, and environmental uncertainty create coordination challenges that must be resolved through effective human–autonomy collaboration.
+If you use the software for research or teaching, cite:
 
----
+> Berton, B., & Doyon-Poulin, P. (2026). *Exoplanet Explorer (Version 1.0.1)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.18651448
 
-## Installation
-
-### Option 1 – Download Release
-
-1. Download the latest release from the **Releases** page.  
-2. Extract the folder.  
-3. Run the executable.
-
-### Option 2 – Clone Repository
-
-Run the following command in your terminal:
-
-    git clone https://github.com/yourusername/Exoplanet-Explorer.git
-
-Additional dependencies (if required):
-
-- Godot version: 4.3  
-- Platform: Windows / Mac / Linux  
-
----
-
-## Current Development Status
-
-The platform is under active development.
-
-Planned improvements include:
-
-- Expanded collaboration scenarios
-- Improved tutorial scaffolding
-- Enhanced interface transparency controls
-- Data logging modules for research studies
-
-Feedback from educators and researchers is welcome.
-
----
-
-## Citation
-
-If you use this software for research or teaching, please cite:
-
-Berton, B., & Doyon-Poulin, P. (2026). *Exoplanet Explorer (Version 1.0.1)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.18651448
-
----
-
-## License
-
-This project is released under the **MIT License**.  
-See the `LICENSE` file for details.
-
----
+Citation metadata is also provided in [`CITATION.cff`](CITATION.cff).
 
 ## Contributing
 
-Contributions are welcome.
+Bug reports, pedagogical feedback, and focused pull requests are welcome through [GitHub Issues](https://github.com/Bertonlome/Human-Autonomy-Teaming-Game/issues). Please open an issue before beginning a major feature change.
 
-You may:
+## License
 
-- Report issues  
-- Suggest pedagogical improvements  
-- Propose new autonomy configurations  
-- Contribute code or documentation  
+Original project code is released under the [MIT License](LICENSE). Third-party artwork, fonts, sound effects, and music remain subject to their respective authors' terms. See [Third-Party Notices](THIRD_PARTY_NOTICES.md); entries whose permission is not confirmed must be cleared or replaced before redistributing a build.
 
-Please open an issue before submitting major feature changes.
+## Authors
 
----
-
-## Contact
-
-Benjamin Berton  
-PhD Candidate – Human Factors Engineering  
-Polytechnique Montréal  
+Benjamin Berton and Philippe Doyon-Poulin, Polytechnique Montréal

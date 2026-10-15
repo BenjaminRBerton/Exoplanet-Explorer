@@ -645,11 +645,17 @@ public partial class BuildingManager : Node
 				break;
 			case State.PlacingBuilding:
 				mouseGridPosition = gridManager.GetMouseGridCellPositionWithDimensionOffset(buildingGhostDimensions);
-				buildingGhost.GlobalPosition = mouseGridPosition * 64;
+				if (IsInstanceValid(buildingGhost))
+				{
+					buildingGhost.GlobalPosition = mouseGridPosition * 64;
+				}
 				break;
 			case State.PlacingBridge:
 				mouseGridPosition = gridManager.GetMouseGridCellPositionWithDimensionOffset(buildingGhostDimensions);
-				buildingGhost.GlobalPosition = mouseGridPosition * 64;
+				if (IsInstanceValid(buildingGhost))
+				{
+					buildingGhost.GlobalPosition = mouseGridPosition * 64;
+				}
 				break;
 			case State.PaintingPath:
 				mouseGridPosition = gridManager.GetMouseGridCellPositionWithDimensionOffset(tileGhostDimensions);
@@ -2354,14 +2360,12 @@ public partial class BuildingManager : Node
 				gameUI.HideSpecialFunctions();
 				break;
 			case State.PlacingBuilding:
-				buildingGhost = buildingGhostScene.Instantiate<BuildingGhost>();
-				ySortRoot.AddChild(buildingGhost);
+				CreateBuildingGhost();
 				break;
 			case State.PlacingBridge:
 				gridManager.ClearHighlightedTiles();
 				gridManager.HighlightBridgePlaceableTiles(selectedBuildingComponent.GetTileArea());
-				buildingGhost = buildingGhostScene.Instantiate<BuildingGhost>();
-				ySortRoot.AddChild(buildingGhost);
+				CreateBuildingGhost();
 				break;
 			case State.PaintingPath:
 				gameUI.DisplaySpecialFunctions();
@@ -2379,6 +2383,19 @@ public partial class BuildingManager : Node
 				//
 				break;
 		}
+	}
+
+	private void CreateBuildingGhost()
+	{
+		if (buildingGhostScene == null)
+		{
+			GD.PushError("Cannot enter placement mode: BuildingManager has no buildingGhostScene configured.");
+			currentState = State.Normal;
+			return;
+		}
+
+		buildingGhost = buildingGhostScene.Instantiate<BuildingGhost>();
+		ySortRoot.AddChild(buildingGhost);
 	}
 
 	private void OnResourceTilesUpdated(Vector2I tile, int resourceCount, string resourceType)
@@ -2446,6 +2463,11 @@ public partial class BuildingManager : Node
 	private void OnBuildingResourceSelected(BuildingResource buildingResource)
 	{
 		ChangeState(State.PlacingBuilding);
+		if (!IsInstanceValid(buildingGhost))
+		{
+			Game.UI.GameUI.PushMessage("Unable to start building placement", "red", true);
+			return;
+		}
 		hoveredGridArea.Size = buildingResource.Dimensions;
 		var buildingSprite = buildingResource.SpriteScene.Instantiate<AnimatedSprite2D>();
 		buildingGhost.AddSpriteNode(buildingSprite);
@@ -2486,6 +2508,11 @@ public partial class BuildingManager : Node
 			return;
 		}
 		ChangeState(State.PlacingBridge);
+		if (!IsInstanceValid(buildingGhost))
+		{
+			Game.UI.GameUI.PushMessage("Unable to start bridge placement", "red", true);
+			return;
+		}
 		hoveredGridArea.Size = new Vector2I(1, 1);
 		var buildingSprite = buildingResource.SpriteScene.Instantiate<AnimatedSprite2D>();
 		buildingGhost.AddSpriteNode(buildingSprite);

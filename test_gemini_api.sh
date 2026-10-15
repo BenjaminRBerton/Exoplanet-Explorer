@@ -14,13 +14,14 @@ if [ -z "$1" ]; then
 fi
 
 API_KEY="$1"
-API_URL="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$API_KEY"
+API_URL="https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
 
 # Test request
 echo "Testing API key..."
 echo ""
 
-RESPONSE=$(curl -s -X POST "$API_URL" \
+if ! RESPONSE=$(curl --silent --show-error --fail-with-body -X POST "$API_URL" \
+    -H "x-goog-api-key: $API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
         "contents": [{
@@ -28,20 +29,31 @@ RESPONSE=$(curl -s -X POST "$API_URL" \
                 "text": "Hello, respond with a simple greeting."
             }]
         }]
-    }')
+    }'); then
+    echo "❌ Gemini API request failed"
+    exit 1
+fi
 
 # Check if response contains error
 if echo "$RESPONSE" | grep -q '"error"'; then
     echo "❌ API key test FAILED"
     echo ""
     echo "Error response:"
-    echo "$RESPONSE" | jq '.'
+    if command -v jq >/dev/null 2>&1; then
+        echo "$RESPONSE" | jq '.'
+    else
+        echo "$RESPONSE"
+    fi
     exit 1
 else
     echo "✅ API key test SUCCESSFUL"
     echo ""
     echo "Response:"
-    echo "$RESPONSE" | jq '.candidates[0].content.parts[0].text'
+    if command -v jq >/dev/null 2>&1; then
+        echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text'
+    else
+        echo "$RESPONSE"
+    fi
 fi
 
 echo ""

@@ -166,7 +166,17 @@ public partial class Rake : Control
 			? new Vector2(RakeDimension * tileSize, tileSize)
 			: new Vector2(tileSize, RakeDimension * tileSize);
 		CustomMinimumSize = rakeSize;
-		Size = rakeSize;
+		if (Mathf.IsEqualApprox(AnchorLeft, AnchorRight) &&
+			Mathf.IsEqualApprox(AnchorTop, AnchorBottom))
+		{
+			Size = rakeSize;
+		}
+		else
+		{
+			// The rake scene also serves as a stretched UI icon. Godot applies its
+			// container layout after _Ready(), so defer the size in that configuration.
+			SetDeferred(Control.PropertyName.Size, rakeSize);
+		}
 
 		if (sprite == null) return;
 		sprite.Position = Vector2.Zero;
@@ -598,7 +608,7 @@ public partial class Rake : Control
 			
 			// Add a new tile to extend the path directly in the push direction
 			// Create the new tile at the old position to maintain path continuity
-			var paintedTileScene = GD.Load<PackedScene>("res://scenes/component/PaintedTile.tscn");
+			var paintedTileScene = GD.Load<PackedScene>("res://scenes/building/PaintedTile.tscn");
 			var newTile = paintedTileScene.Instantiate<PaintedTile>();
 			newTile.GlobalPosition = new Vector2(oldGridPos.X * tileSize, oldGridPos.Y * tileSize);
 			buildingManager.AddChild(newTile);

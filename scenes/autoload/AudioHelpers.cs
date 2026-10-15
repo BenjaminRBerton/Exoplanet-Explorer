@@ -12,6 +12,7 @@ public partial class AudioHelpers : Node
 	private AudioStreamPlayer explosionAudioStreamPlayer;
 	private AudioStreamPlayer clickAudioStreamPlayer;
 	private AudioStreamPlayer victoryAudioStreamPlayer;
+	private AudioStreamPlayer failureAudioStreamPlayer;
 	private AudioStreamPlayer musicAudioStreamPlayer;
 	private AudioStreamPlayer robotMoveAudioStreamPlayer;
 	private AudioStreamPlayer endOfLineSoundStreamPlayer;
@@ -55,6 +56,7 @@ public partial class AudioHelpers : Node
 		explosionAudioStreamPlayer = GetNode<AudioStreamPlayer>("ExplosionAudioStreamPlayer");
 		clickAudioStreamPlayer = GetNode<AudioStreamPlayer>("ClickAudioStreamPlayer");
 		victoryAudioStreamPlayer = GetNode<AudioStreamPlayer>("VictoryAudioStreamPlayer");
+		failureAudioStreamPlayer = GetNode<AudioStreamPlayer>("FailureAudioStreamPlayer");
 		musicAudioStreamPlayer = GetNode<AudioStreamPlayer>("MusicAudioStreamPlayer");
 		robotMoveAudioStreamPlayer = GetNode<AudioStreamPlayer>("RobotMoveAudioStreamPlayer");
 		endOfLineSoundStreamPlayer = GetNode<AudioStreamPlayer>("EndOfLineSoundStreamPlayer");
@@ -122,7 +124,7 @@ public partial class AudioHelpers : Node
 
 	public static void PlayFailed()
 	{
-		instance.explosionAudioStreamPlayer.Play(); // TO CHANGE FOR A FAILURE SOUND
+		instance.failureAudioStreamPlayer.Play();
 	}
 	public static void PlayBuildingDestruction()
 	{
