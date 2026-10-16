@@ -15,9 +15,10 @@ public sealed class Level3Tutorial : TutorialScript
 		eventContext.Subject is BuildingComponent building &&
 		building.BuildingResource?.DisplayName == "Rover";
 
-	private static Func<bool> CreateFreshActionPredicate(string action)
+	private static Func<bool> CreateFreshActionCompletedPredicate(string action)
 	{
 		bool armed = false;
+		bool pressed = false;
 		return () =>
 		{
 			if (!armed)
@@ -25,7 +26,12 @@ public sealed class Level3Tutorial : TutorialScript
 				armed = !Input.IsActionPressed(action);
 				return false;
 			}
-			return Input.IsActionJustPressed(action);
+			if (!pressed)
+			{
+				pressed = Input.IsActionPressed(action);
+				return false;
+			}
+			return !Input.IsActionPressed(action);
 		};
 	}
 
@@ -94,13 +100,13 @@ public sealed class Level3Tutorial : TutorialScript
 			.Say("PAINT OR CONNECT",
 				"Freehand-paint individual path tiles, or specify a destination and let the planner connect departure and arrival efficiently. Build a route toward the highlighted fragment.")
 			.PointTo(TutorialTargetIds.MonolithFragment).GuideAction().PlaceCallout(TutorialCalloutPlacement.TopRight).UndimBackground()
-			.UntilState(CreateFreshActionPredicate("left_click")).OrContinue();
+			.UntilState(CreateFreshActionCompletedPredicate("left_click")).OrContinue();
 
 		tutorial.Step("level3.avoid-path")
 			.Say("AVOID UNSAFE TILES",
 				"Right-click a painted tile to mark it as avoided—for example, a mud tile. The route planner will reconnect around that constraint.")
 			.GuideAction().UndimBackground().PlaceCallout(TutorialCalloutPlacement.TopRight)
-			.UntilState(CreateFreshActionPredicate("right_click")).OrContinue();
+			.UntilState(CreateFreshActionCompletedPredicate("right_click")).OrContinue();
 
 		tutorial.Step("level3.rake")
 			.Say("RAKE TOOL",

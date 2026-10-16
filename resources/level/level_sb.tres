@@ -9,3 +9,6 @@ StartingWoodCount = 1000
 StartingMaterialCount = 1000
 LevelScenePath = "res://scenes/level/LevelSandBox.tscn"
 LevelDuration = 100000
+RoverCanGetStuck = false
+AnomalyReadingEnabled = true
+IsPresentation = false

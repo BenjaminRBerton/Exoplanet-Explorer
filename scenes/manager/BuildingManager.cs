@@ -661,6 +661,19 @@ public partial class BuildingManager : Node
 				mouseGridPosition = gridManager.GetMouseGridCellPositionWithDimensionOffset(tileGhostDimensions);
 				tileGhost.GlobalPosition = mouseGridPosition * 64;
 				UpdateRakeHover(ySortRoot.GetGlobalMousePosition());
+
+				// A UI overlay can consume a mouse-release event. Reconcile the drag flags with
+				// the physical button state so painting or erasing cannot remain latched.
+				if (isPaintingWithMouse && !Input.IsMouseButtonPressed(MouseButton.Left))
+				{
+					isPaintingWithMouse = false;
+					lastPaintedTile = new Vector2I(int.MinValue, int.MinValue);
+				}
+				if (isErasingWithMouse && !Input.IsMouseButtonPressed(MouseButton.Right))
+				{
+					isErasingWithMouse = false;
+					lastErasedTile = new Vector2I(int.MinValue, int.MinValue);
+				}
 				
 				// Continuously paint while left mouse button is held down
 				if (isPaintingWithMouse && selectedBuildingComponent != null)
