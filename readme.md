@@ -67,7 +67,7 @@ Bug reports, pedagogical feedback, and focused pull requests are welcome through
 
 ## License
 
-Original project code is released under the [MIT License](LICENSE). Third-party artwork, fonts, sound effects, and music remain subject to their respective authors' terms. See [Third-Party Notices](THIRD_PARTY_NOTICES.md); entries whose permission is not confirmed must be cleared or replaced before redistributing a build.
+Original project code is released under the [MIT License](LICENSE). Third-party artwork, fonts, sound effects, and music remain subject to their respective authors' terms. See [Third-Party Notices](THIRD_PARTY_NOTICES.md)
 
 ## Authors
 
