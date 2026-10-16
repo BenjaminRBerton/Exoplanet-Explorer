@@ -18,4 +18,8 @@ public partial class LevelDefinitionResource : Resource
     public int LevelDuration { get; private set; } = 300; // 5 minutes in seconds
     [Export]
     public bool RoverCanGetStuck { get; private set; } = false;
+    [Export]
+    public bool AnomalyReadingEnabled { get; private set; } = true;
+    [Export]
+    public bool IsPresentation { get; private set; } = false;
 }

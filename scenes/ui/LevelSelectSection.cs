@@ -72,7 +72,7 @@ public partial class LevelSelectSection : PanelContainer
 		}
 
 		levelNumberLabel.Text = isPresentation
-			? $"Level {levelIndex + 1}\n(Presentation)"
+			? "DEMO\n(Presentation)"
 			: $"Level {levelIndex + 1}\n(Tutorial)";
 		tutorialStatusLabel.Visible = true;
 		tutorialStatusLabel.Text = isPresentation

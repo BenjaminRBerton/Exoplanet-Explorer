@@ -304,14 +304,14 @@ public partial class SelectedRobotUI : CanvasLayer
 			GameEvents.Instance.Connect(GameEvents.SignalName.BuildingMoved, buildingMovedCallable);
 		}
 		RefreshNearbySampleAvailability();
-		ApplyLevelSpecificSensorVisibility();
+		ApplyAnomalyReadingVisibility();
 		
 		Visible = true;
 	}
 
-	private void ApplyLevelSpecificSensorVisibility()
+	private void ApplyAnomalyReadingVisibility()
 	{
-		if (baseLevel?.LevelId != TutorialCatalog.Level3Id) return;
+		if (baseLevel?.AnomalyReadingEnabled != false) return;
 
 		miniMapController?.AnomalyRadarControl?.Hide();
 		GetNodeOrNull<Control>("%RobotInfoContainer")?.Hide();

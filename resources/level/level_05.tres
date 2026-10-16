@@ -4,8 +4,11 @@
 
 [resource]
 script = ExtResource("1_dorbh")
-Id = "godflesh"
+Id = "bloodhail"
 StartingWoodCount = 15
-StartingMaterialCount = 6
+StartingMaterialCount = 15
 LevelScenePath = "res://scenes/level/Level5.tscn"
 LevelDuration = 1500
+RoverCanGetStuck = true
+AnomalyReadingEnabled = false
+IsPresentation = false

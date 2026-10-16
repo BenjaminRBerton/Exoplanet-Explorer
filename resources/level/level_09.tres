@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LevelDefinitionResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/level/LevelDefinitionResource.cs" id="1_jlce8"]
+
+[resource]
+script = ExtResource("1_jlce8")
+Id = "conference_demo"
+StartingWoodCount = 30
+StartingMaterialCount = 20
+LevelScenePath = "res://scenes/level/Level9.tscn"
+LevelDuration = 1800
+RoverCanGetStuck = true
+IsPresentation = true

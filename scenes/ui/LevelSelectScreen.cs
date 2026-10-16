@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Game.Autoload;
 using Game.Resources.Level;
 using Game.UI.Tutorial;
@@ -7,6 +8,8 @@ namespace Game.UI;
 
 public partial class LevelSelectScreen : MarginContainer
 {
+	private const int LevelsPerPage = 8;
+
 	[Signal]
 	public delegate void BackPressedEventHandler();
 
@@ -15,7 +18,12 @@ public partial class LevelSelectScreen : MarginContainer
 
 	private GridContainer gridContainer;
 	private Button backButton;
+	private Button previousPageButton;
+	private Button nextPageButton;
+	private Label pageLabel;
 	private LevelDefinitionResource[] levelDefinitions;
+	private readonly List<LevelSelectSection> levelSections = new();
+	private int currentPage;
 	private ConfirmationDialog tutorialChoiceDialog;
 	private Button regularModeButton;
 	private int pendingLevelIndex = -1;
@@ -24,7 +32,10 @@ public partial class LevelSelectScreen : MarginContainer
 	{
 		gridContainer = GetNode<GridContainer>("%GridContainer");
 		backButton = GetNode<Button>("BackButton");
-		AudioHelpers.RegisterButtons(new Button[] { backButton });
+		previousPageButton = GetNode<Button>("%PreviousPageButton");
+		nextPageButton = GetNode<Button>("%NextPageButton");
+		pageLabel = GetNode<Label>("%PageLabel");
+		AudioHelpers.RegisterButtons(new Button[] { backButton, previousPageButton, nextPageButton });
 
 		CreateTutorialChoiceDialog();
 		levelDefinitions = LevelManager.GetLevelDefinitions();
@@ -33,19 +44,23 @@ public partial class LevelSelectScreen : MarginContainer
 			var levelDefinition = levelDefinitions[i];
 			var levelSelectSection = levelSelectSectionScene.Instantiate<LevelSelectSection>();
 			gridContainer.AddChild(levelSelectSection);
+			levelSections.Add(levelSelectSection);
 
 			levelSelectSection.SetLevelDefinition(levelDefinition);
 			levelSelectSection.SetLevelIndex(i);
 			levelSelectSection.SetTutorialAvailability(
 				TutorialCatalog.HasTutorial(levelDefinition.Id),
 				SaveManager.HasTutorialStarted(levelDefinition.Id),
-				TutorialCatalog.IsPresentation(levelDefinition.Id));
+				levelDefinition.IsPresentation);
 			levelSelectSection.LevelSelected += OnLevelSelected;
 		}
 
 		backButton.Pressed += OnBackButtonPressed;
+		previousPageButton.Pressed += OnPreviousPagePressed;
+		nextPageButton.Pressed += OnNextPagePressed;
 		GetViewport().SizeChanged += UpdateGridColumns;
 		UpdateGridColumns();
+		UpdatePage();
 	}
 
 	private void OnLevelSelected(int levelIndex)
@@ -61,7 +76,7 @@ public partial class LevelSelectScreen : MarginContainer
 			LevelManager.ChangeToLevel(levelIndex, tutorialMode: false);
 			return;
 		}
-		if (TutorialCatalog.IsPresentation(levelDefinition.Id))
+		if (levelDefinition.IsPresentation)
 		{
 			StartTutorial(levelIndex);
 			return;
@@ -79,6 +94,43 @@ public partial class LevelSelectScreen : MarginContainer
 			"You have already started this tutorial. Replay it, or enter the level without tutorial guidance?";
 		SetPopupCursorOverride(true);
 		tutorialChoiceDialog.PopupCentered();
+	}
+
+	private void OnPreviousPagePressed()
+	{
+		currentPage--;
+		UpdatePage();
+	}
+
+	private void OnNextPagePressed()
+	{
+		currentPage++;
+		UpdatePage();
+	}
+
+	private void UpdatePage()
+	{
+		int pageCount = Mathf.Max(1, Mathf.CeilToInt(levelSections.Count / (float)LevelsPerPage));
+		currentPage = Mathf.Clamp(currentPage, 0, pageCount - 1);
+
+		for (int i = 0; i < levelSections.Count; i++)
+		{
+			levelSections[i].Visible = i / LevelsPerPage == currentPage;
+		}
+
+		bool showsPresentation = false;
+		int firstVisibleIndex = currentPage * LevelsPerPage;
+		int lastVisibleIndex = Mathf.Min(firstVisibleIndex + LevelsPerPage, levelDefinitions.Length);
+		for (int i = firstVisibleIndex; i < lastVisibleIndex; i++)
+		{
+			showsPresentation |= levelDefinitions[i].IsPresentation;
+		}
+
+		pageLabel.Text = showsPresentation
+			? $"PAGE {currentPage + 1} / {pageCount} - SPECIAL"
+			: $"PAGE {currentPage + 1} / {pageCount} - LEVELS 1-8";
+		previousPageButton.Disabled = currentPage == 0;
+		nextPageButton.Disabled = currentPage == pageCount - 1;
 	}
 
 	private void CreateTutorialChoiceDialog()
@@ -210,6 +262,14 @@ public partial class LevelSelectScreen : MarginContainer
 		if (regularModeButton != null)
 		{
 			regularModeButton.Pressed -= OnRegularModePressed;
+		}
+		if (previousPageButton != null)
+		{
+			previousPageButton.Pressed -= OnPreviousPagePressed;
+		}
+		if (nextPageButton != null)
+		{
+			nextPageButton.Pressed -= OnNextPagePressed;
 		}
 	}
 }

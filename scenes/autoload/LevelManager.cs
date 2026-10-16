@@ -63,6 +63,12 @@ public partial class LevelManager : Node
 	}
 	public static bool IsLastLevel()
 	{
-		return currentLevelIndex == instance.levelDefinitions.Length - 1;
+		if (currentLevelIndex >= instance.levelDefinitions.Length - 1)
+		{
+			return true;
+		}
+
+		// Presentation entries are launched separately and are not part of campaign progression.
+		return instance.levelDefinitions[currentLevelIndex + 1].IsPresentation;
 	}
 }

@@ -17,6 +17,7 @@ public partial class BaseLevel : Node
 {
 	public event Action<Vector2I> FragmentAnalysisStatusChanged;
 	public string LevelId => levelDefinitionResource?.Id;
+	public bool AnomalyReadingEnabled => levelDefinitionResource?.AnomalyReadingEnabled ?? true;
 
 	private readonly StringName ESCAPE_ACTION = "escape";
 	[Export]

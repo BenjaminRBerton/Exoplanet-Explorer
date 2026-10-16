@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LevelDefinitionResource" load_steps=2 format=3 uid="uid://dfng11fxxa15t"]
+
+[ext_resource type="Script" path="res://resources/level/LevelDefinitionResource.cs" id="1_level"]
+
+[resource]
+script = ExtResource("1_level")
+Id = "bloodhail_reprise_2"
+StartingWoodCount = 15
+StartingMaterialCount = 5
+LevelScenePath = "res://scenes/level/Level8.tscn"
+LevelDuration = 75000
+RoverCanGetStuck = true
+AnomalyReadingEnabled = false
+IsPresentation = false
