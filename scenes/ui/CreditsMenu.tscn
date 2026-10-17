@@ -1,0 +1,127 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/CreditsMenu.cs" id="1_credits"]
+[ext_resource type="Theme" uid="uid://lrxwuh3o4l5k" path="res://resources/sci-fi-theme.tres" id="2_theme"]
+
+[node name="CreditsMenu" type="CanvasLayer"]
+layer = 3
+script = ExtResource("1_credits")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 64
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 64
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
+custom_minimum_size = Vector2(850, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme = ExtResource("2_theme")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 32
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"Title"
+text = "CREDITS"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="DesignHeading" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.890196, 0.717647, 1)
+theme_override_font_sizes/font_size = 24
+text = "DESIGN & DEVELOPMENT"
+horizontal_alignment = 1
+
+[node name="Designer" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Benjamin R. Berton"
+horizontal_alignment = 1
+
+[node name="MusicHeading" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.890196, 0.717647, 1)
+theme_override_font_sizes/font_size = 24
+text = "MUSIC & VIDEO"
+horizontal_alignment = 1
+
+[node name="MusicCredit" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Robin Kevorkian-Mielly\nMain theme creator and video director"
+horizontal_alignment = 1
+
+[node name="VideoButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "WATCH THE VIDEO"
+
+[node name="TeachingHeading" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.890196, 0.717647, 1)
+theme_override_font_sizes/font_size = 24
+text = "TEACHING MATERIAL"
+horizontal_alignment = 1
+
+[node name="TeachingCredit" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Philippe Doyon-Poulin"
+horizontal_alignment = 1
+
+[node name="TeachingMaterialButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "VIEW TEACHING MATERIAL"
+
+[node name="ThanksHeading" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.890196, 0.717647, 1)
+theme_override_font_sizes/font_size = 24
+text = "SPECIAL THANKS"
+horizontal_alignment = 1
+
+[node name="Testers" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Playtesters: Cecile, Nico, Matteo, and Andra"
+horizontal_alignment = 1
+
+[node name="DoneButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "DONE"

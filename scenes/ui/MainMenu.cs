@@ -12,6 +12,8 @@ public partial class MainMenu : Node
 	private PackedScene rulesMenuScene;
 	[Export]
 	private PackedScene controlsMenuScene;
+	[Export]
+	private PackedScene creditsMenuScene;
 
 	private Button playButton;
 	private Control mainMenuContainer;
@@ -20,6 +22,7 @@ public partial class MainMenu : Node
 	private Button optionsButton;
 	private Button rulesButton;
 	private Button controlsButton;
+	private Button creditsButton;
 
 	private Button watchIntroButton;
 
@@ -31,8 +34,9 @@ public partial class MainMenu : Node
 		rulesButton = GetNode<Button>("%RulesButton");
 		watchIntroButton = GetNode<Button>("%IntroButton");
 		controlsButton = GetNode<Button>("%ControlsButton");
+		creditsButton = GetNode<Button>("%CreditsButton");
 
-		AudioHelpers.RegisterButtons(new Button[] { playButton, quitButton, optionsButton, rulesButton, watchIntroButton, controlsButton });
+		AudioHelpers.RegisterButtons(new Button[] { playButton, quitButton, optionsButton, rulesButton, watchIntroButton, controlsButton, creditsButton });
 
 		mainMenuContainer = GetNode<Control>("%MainMenuContainer");
 		levelSelectScreen = GetNode<LevelSelectScreen>("%LevelSelectScreen");
@@ -47,6 +51,7 @@ public partial class MainMenu : Node
 		rulesButton.Pressed += OnRulesButtonPressed;
 		watchIntroButton.Pressed += OnWatchIntroButtonPressed;
 		controlsButton.Pressed += OnControlsButtonPressed;
+		creditsButton.Pressed += OnCreditsButtonPressed;
 	}
 
 	private void OnPlayButtonPressed()
@@ -120,5 +125,17 @@ public partial class MainMenu : Node
 	{
 		controlsMenu.QueueFree();
 		mainMenuContainer.Visible = true;
+	}
+
+	private void OnCreditsButtonPressed()
+	{
+		mainMenuContainer.Visible = false;
+		var creditsMenu = creditsMenuScene.Instantiate<CreditsMenu>();
+		AddChild(creditsMenu);
+		creditsMenu.DonePressed += () =>
+		{
+			creditsMenu.QueueFree();
+			mainMenuContainer.Visible = true;
+		};
 	}
 }
