@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://dtanw3tk455ur"]
+[gd_scene load_steps=25 format=3 uid="uid://dtanw3tk455ur"]
 
 [ext_resource type="Script" path="res://scenes/autoload/AudioHelpers.cs" id="1_s3wg7"]
 [ext_resource type="AudioStream" uid="uid://qsbn74jjuvup" path="res://assets/audio/explosion_01.wav" id="2_yoq2d"]
@@ -21,6 +21,7 @@
 [ext_resource type="AudioStream" uid="uid://dxwbbqkky4rgk" path="res://assets/audio/GeigerClack.wav" id="19_rrnqa"]
 [ext_resource type="AudioStream" uid="uid://xh24266v1iee" path="res://assets/audio/GeigerCrackleLoop.wav" id="20_shn8t"]
 [ext_resource type="AudioStream" path="res://assets/audio/error_006.wav" id="21_failure"]
+[ext_resource type="AudioStream" path="res://assets/audio/ExoplanetExplorerThemeSong.ogg" id="22_theme"]
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_emq37"]
 streams_count = 3
@@ -29,15 +30,17 @@ stream_1/stream = ExtResource("3_5p0kw")
 stream_2/stream = ExtResource("4_g7hsd")
 
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_cbm3q"]
-streams_count = 5
+streams_count = 6
 stream_0/stream = ExtResource("7_n34jh")
 stream_1/stream = ExtResource("8_h4nsv")
 stream_2/stream = ExtResource("9_ejprn")
 stream_3/stream = ExtResource("10_co8tf")
 stream_4/stream = ExtResource("11_lmpfm")
+stream_5/stream = ExtResource("22_theme")
 
 [node name="AudioHelpers" type="Node"]
 script = ExtResource("1_s3wg7")
+musicPlaylist = SubResource("AudioStreamRandomizer_cbm3q")
 
 [node name="ExplosionAudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource("AudioStreamRandomizer_emq37")
@@ -59,7 +62,7 @@ volume_db = -8.0
 bus = &"SFX"
 
 [node name="MusicAudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = SubResource("AudioStreamRandomizer_cbm3q")
+stream = ExtResource("22_theme")
 volume_db = -25.0
 autoplay = true
 max_polyphony = 3

@@ -23,6 +23,8 @@ public partial class AudioHelpers : Node
 	private AudioStreamPlayer introMusicStreamPlayer;
 	private AudioStreamPlayer geigerClackAudioStreamPlayer;
 	private AudioStreamPlayer geigerCrackleLoopAudioStreamPlayer;
+	[Export]
+	private AudioStream musicPlaylist;
 	private int noiseReductionForTextSounds = 35;
 
 	// Geiger counter state
@@ -186,6 +188,12 @@ public partial class AudioHelpers : Node
 
 	private void OnMusicFinished()
 	{
+		// The player starts with the Exoplanet Explorer theme. Once it has played in
+		// full, hand playback to the regular randomized playlist.
+		if (musicPlaylist != null && musicAudioStreamPlayer.Stream != musicPlaylist)
+		{
+			musicAudioStreamPlayer.Stream = musicPlaylist;
+		}
 		GetTree().CreateTimer(5).Timeout += OnMusicDelayTimerTimeout;
 	}
 	private void OnIntroMusicFinished()
